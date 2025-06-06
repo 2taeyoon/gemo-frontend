@@ -1,4 +1,5 @@
-import Home from "@/app/Home";
+import React from 'react'
+import Gemocard from "@/app/gemocard/gemocard";
 
 export const metadata = {
   title: "GEMO",
@@ -18,8 +19,6 @@ export const metadata = {
   },
 };
 
-export default function Page() {
-  return (
-    <Home/>
-  );
+export default function page() {
+	return <Gemocard/>
 }
