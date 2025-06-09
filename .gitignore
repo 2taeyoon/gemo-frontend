@@ -37,3 +37,5 @@ yarn-error.log*
 next-env.d.ts
 
 repomix-output.xml
+.env
+.env.local
