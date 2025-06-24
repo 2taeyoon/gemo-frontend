@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User, Settings, HelpCircle, BarChart3, Moon, Sun, Calendar } from 'lucide-react'
 import Link from "next/link"
 import { useUser } from "../contexts/UserContext"
 import { decomposeKorean, checkGuess } from "../utils/korean"
@@ -317,9 +316,9 @@ export default function KoreanWordle() {
             <>
               <span className={styles.userGreeting}>{user.name}님 반갑습니다!</span>
               <LevelBar size="small" />
-              <Link href="/attendance" className={styles.iconButton} title="출석체크">
+              {/* <Link href="/attendance" className={styles.iconButton} title="출석체크">
                 <Calendar size={20} />
-              </Link>
+              </Link> */}
             </>
           )}
 
@@ -329,16 +328,16 @@ export default function KoreanWordle() {
             className={styles.iconButton}
             title={darkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
           >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {/* {darkMode ? <Sun size={20} /> : <Moon size={20} />} */}
           </button>
 
           {/* 기타 버튼들 */}
-          <Link href="/login" className={styles.iconButton} title="로그인">
+          {/* <Link href="/login" className={styles.iconButton} title="로그인">
             <User size={20} />
           </Link>
           <Settings size={24} className={styles.icon} />
           <HelpCircle size={24} className={styles.icon} />
-          <BarChart3 size={24} className={styles.icon} />
+          <BarChart3 size={24} className={styles.icon} /> */}
         </div>
       </header>
 
