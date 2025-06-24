@@ -1,70 +1,57 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User, Settings, HelpCircle, BarChart3, Moon, Sun, Calendar } from "lucide-react"
-import { decomposeKorean, checkGuess } from "@/utils/korean"
+import { User, Settings, HelpCircle, BarChart3, Moon, Sun, Calendar } from 'lucide-react'
 import Link from "next/link"
-import { useUser } from "@/contexts/UserContext"
-import LevelBar from "@/components/kordle/LevelBar"
+import { useUser } from "../contexts/UserContext"
+import { decomposeKorean, checkGuess } from "../utils/korean"
+import LevelBar from "../components/LevelBar"
+import styles from "../styles/GamePage.module.css"
 
+// 한글 단어 데이터 타입 정의
 interface WordData {
   words: string[]
 }
 
-// 기본 자모만 포함한 키보드 매핑
+// 영어 키보드를 한글 자모로 매핑하는 객체
+// 예: 'q' 키를 누르면 'ㅂ'이 입력됩니다
 const keyboardMapping: { [key: string]: string } = {
-  // 기본 자음
-  q: "ㅂ",
-  w: "ㅈ",
-  e: "ㄷ",
-  r: "ㄱ",
-  t: "ㅅ",
-  a: "ㅁ",
-  s: "ㄴ",
-  d: "ㅇ",
-  f: "ㄹ",
-  g: "ㅎ",
-  z: "ㅋ",
-  x: "ㅌ",
-  c: "ㅊ",
-  v: "ㅍ",
-
-  // 기본 모음
-  y: "ㅛ",
-  u: "ㅕ",
-  i: "ㅑ",
-  o: "ㅐ",
-  p: "ㅔ",
-  h: "ㅗ",
-  j: "ㅓ",
-  k: "ㅏ",
-  l: "ㅣ",
-  b: "ㅠ",
-  n: "ㅜ",
-  m: "ㅡ",
+  // 기본 자음 매핑
+  q: "ㅂ", w: "ㅈ", e: "ㄷ", r: "ㄱ", t: "ㅅ",
+  a: "ㅁ", s: "ㄴ", d: "ㅇ", f: "ㄹ", g: "ㅎ",
+  z: "ㅋ", x: "ㅌ", c: "ㅊ", v: "ㅍ",
+  // 기본 모음 매핑
+  y: "ㅛ", u: "ㅕ", i: "ㅑ", o: "ㅐ", p: "ㅔ",
+  h: "ㅗ", j: "ㅓ", k: "ㅏ", l: "ㅣ",
+  b: "ㅠ", n: "ㅜ", m: "ㅡ",
 }
 
+// 메인 게임 컴포넌트
 export default function KoreanWordle() {
+  // 사용자 컨텍스트에서 사용자 정보와 관련 함수들을 가져옵니다
   const { user, addGameWin, resetWinStreak } = useUser()
-  const [targetWord, setTargetWord] = useState<string>("")
-  const [targetJamo, setTargetJamo] = useState<string[]>([])
-  const [currentRow, setCurrentRow] = useState(0)
-  const [currentCol, setCurrentCol] = useState(0)
-  const [gameOver, setGameOver] = useState(false)
-  const [won, setWon] = useState(false)
-  const [message, setMessage] = useState("")
-  const [darkMode, setDarkMode] = useState(false)
 
-  // 게임 그리드 - 동적 크기
+  // 게임 상태 관리를 위한 state들
+  const [targetWord, setTargetWord] = useState<string>("") // 정답 단어
+  const [targetJamo, setTargetJamo] = useState<string[]>([]) // 정답 단어를 자모로 분해한 배열
+  const [currentRow, setCurrentRow] = useState(0) // 현재 입력 중인 행
+  const [currentCol, setCurrentCol] = useState(0) // 현재 입력 중인 열
+  const [gameOver, setGameOver] = useState(false) // 게임 종료 여부
+  const [won, setWon] = useState(false) // 게임 승리 여부
+  const [message, setMessage] = useState("") // 사용자에게 보여줄 메시지
+  const [darkMode, setDarkMode] = useState(false) // 다크모드 여부
+
+  // 게임 그리드 - 사용자가 입력한 글자들을 저장
   const [grid, setGrid] = useState<string[][]>([])
+  // 각 셀의 상태 - 정답(correct), 포함(present), 없음(absent)
   const [cellStates, setCellStates] = useState<("correct" | "present" | "absent" | "")[][]>([])
 
-  // 키보드 상태 - 우선순위 기반 단순화
+  // 키보드 각 키의 상태를 저장 (어떤 키가 정답인지, 포함되는지 등)
   const [keyStates, setKeyStates] = useState<{
     [key: string]: "correct" | "present" | "absent" | ""
   }>({})
 
-  // 다크모드 초기화 및 localStorage 연동
+  // 컴포넌트가 처음 렌더링될 때 다크모드 설정을 localStorage에서 불러옵니다
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode")
     if (savedDarkMode) {
@@ -72,38 +59,44 @@ export default function KoreanWordle() {
     }
   }, [])
 
-  // 다크모드 변경 시 localStorage에 저장
+  // 다크모드가 변경될 때마다 localStorage에 저장하고 body 클래스를 업데이트합니다
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode))
+    if (darkMode) {
+      document.body.classList.add("dark")
+    } else {
+      document.body.classList.remove("dark")
+    }
   }, [darkMode])
 
-  // 게임 초기화
+  // 컴포넌트가 처음 렌더링될 때 게임을 초기화합니다
   useEffect(() => {
     initializeGame()
   }, [])
 
-  // 키보드 이벤트 리스너
+  // 키보드 이벤트를 처리하는 useEffect
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // 게임이 끝났으면 키 입력을 무시합니다
       if (gameOver) return
 
       const key = event.key
 
-      // 백스페이스
+      // 백스페이스 키 처리
       if (key === "Backspace") {
         event.preventDefault()
         handleKeyPress("삭제")
         return
       }
 
-      // 엔터
+      // 엔터 키 처리
       if (key === "Enter") {
         event.preventDefault()
         handleKeyPress("입력")
         return
       }
 
-      // 한글 자모 매핑
+      // 영어 키를 한글 자모로 변환
       const mappedKey = keyboardMapping[key]
       if (mappedKey) {
         event.preventDefault()
@@ -119,29 +112,38 @@ export default function KoreanWordle() {
       }
     }
 
-    // 이벤트 리스너 등록
+    // 키보드 이벤트 리스너를 등록합니다
     window.addEventListener("keydown", handleKeyDown)
 
-    // 클린업
+    // 컴포넌트가 언마운트될 때 이벤트 리스너를 제거합니다
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
   }, [gameOver, currentRow, currentCol, targetJamo.length])
 
+  // 게임을 초기화하는 함수
   const initializeGame = async () => {
     try {
+      // 한글 단어 목록을 불러옵니다
       const response = await fetch("/korean-words.json")
       const data: WordData = await response.json()
+
+      // 랜덤하게 단어를 선택합니다
       const randomWord = data.words[Math.floor(Math.random() * data.words.length)]
+
+      // 선택된 단어를 자모로 분해합니다
       const decomposed = decomposeKorean(randomWord)
 
+      // 게임 상태를 초기화합니다
       setTargetWord(randomWord)
       setTargetJamo(decomposed)
 
-      // 그리드 초기화 (가로: 자모 길이, 세로: 6)
+      // 게임 그리드를 초기화합니다 (6행 x 자모길이 열)
       const newGrid = Array(6)
         .fill(null)
         .map(() => Array(decomposed.length).fill(""))
+
+      // 셀 상태 배열을 초기화합니다
       const newCellStates = Array(6)
         .fill(null)
         .map(() => Array(decomposed.length).fill(""))
@@ -155,11 +157,12 @@ export default function KoreanWordle() {
       setMessage(`정답: ${randomWord} (${decomposed.join(" ")})`) // 개발용 - 나중에 제거
       setKeyStates({})
     } catch (error) {
-      console.error("Failed to load words:", error)
+      console.error("단어 로딩 실패:", error)
+      setMessage("게임 로딩에 실패했습니다. 새로고침해주세요.")
     }
   }
 
-  // 기본 자모만 포함한 키보드 레이아웃
+  // 화면에 표시할 키보드 레이아웃
   const keyboardRows = [
     ["ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅛ", "ㅕ", "ㅑ"],
     ["ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅗ", "ㅓ", "ㅏ", "ㅣ"],
@@ -167,10 +170,12 @@ export default function KoreanWordle() {
     ["입력", "삭제"],
   ]
 
+  // 키 입력을 처리하는 함수
   const handleKeyPress = (key: string) => {
     if (gameOver) return
 
     if (key === "삭제") {
+      // 백스페이스: 이전 글자 삭제
       if (currentCol > 0) {
         const newGrid = [...grid]
         newGrid[currentRow][currentCol - 1] = ""
@@ -178,13 +183,16 @@ export default function KoreanWordle() {
         setCurrentCol(currentCol - 1)
       }
     } else if (key === "입력") {
+      // 엔터: 현재 행의 답안 제출
       if (currentCol === targetJamo.length) {
         submitGuess()
       } else {
         setMessage("모든 칸을 채워주세요!")
+        // 2초 후 메시지 제거
         setTimeout(() => setMessage(""), 2000)
       }
     } else {
+      // 일반 글자 입력
       if (currentCol < targetJamo.length) {
         const newGrid = [...grid]
         newGrid[currentRow][currentCol] = key
@@ -194,47 +202,38 @@ export default function KoreanWordle() {
     }
   }
 
+  // 사용자의 추측을 제출하고 결과를 확인하는 함수
   const submitGuess = () => {
-    const guess = grid[currentRow]
-    const result = checkGuess(guess, targetJamo)
+    const guess = grid[currentRow] // 현재 행의 추측
+    const result = checkGuess(guess, targetJamo) // 추측 결과 확인
 
     // 셀 상태 업데이트
     const newCellStates = [...cellStates]
     newCellStates[currentRow] = result
     setCellStates(newCellStates)
 
-    // 키보드 상태 업데이트 - 우선순위 기반 (correct > present > absent)
+    // 키보드 상태 업데이트 (우선순위: correct > present > absent)
     const newKeyStates = { ...keyStates }
     guess.forEach((char, index) => {
       const currentState = newKeyStates[char] || ""
       const newState = result[index]
 
-      // 우선순위: correct > present > absent
-      // 한 번이라도 correct였다면 계속 correct 유지
+      // 이미 correct인 키는 그대로 유지
       if (currentState === "correct") {
-        // 이미 correct이면 변경하지 않음
         return
       } else if (newState === "correct") {
-        // 새로 correct가 되면 correct로 설정
         newKeyStates[char] = "correct"
       } else if (currentState === "present") {
-        // 이미 present이고 새로운 상태가 correct가 아니면 present 유지
-        if (newState !== "absent") {
-          // present 유지 (absent로 덮어쓰지 않음)
-        } else {
-          // present였는데 absent가 나왔다면... 이는 논리적으로 불가능하지만 present 유지
-        }
+        // present 상태 유지 (absent로 덮어쓰지 않음)
       } else if (newState === "present" && currentState !== "absent") {
-        // 새로 present가 되고 이전에 absent가 아니었다면 present로 설정
         newKeyStates[char] = "present"
       } else if (newState === "absent" && !currentState) {
-        // 처음으로 absent가 되면 absent로 설정
         newKeyStates[char] = "absent"
       }
     })
     setKeyStates(newKeyStates)
 
-    // 승리 체크
+    // 승리 조건 확인
     if (result.every((state) => state === "correct")) {
       setWon(true)
       setGameOver(true)
@@ -245,6 +244,7 @@ export default function KoreanWordle() {
         addGameWin()
       }
     } else if (currentRow === 5) {
+      // 6번째 시도까지 실패한 경우
       setGameOver(true)
       setMessage(`게임 종료! 정답은 "${targetWord}"였습니다.`)
 
@@ -253,159 +253,103 @@ export default function KoreanWordle() {
         resetWinStreak()
       }
     } else {
+      // 다음 행으로 이동
       setCurrentRow(currentRow + 1)
       setCurrentCol(0)
     }
   }
 
+  // 다크모드 토글 함수
   const toggleDarkMode = () => {
     setDarkMode(!darkMode)
   }
 
+  // 셀의 CSS 클래스를 결정하는 함수
   const getCellClass = (state: string, hasContent: boolean) => {
-    const baseClass = "w-12 h-12 border-2 flex items-center justify-center text-lg font-bold transition-colors"
+    const className = styles.cell
 
     if (!hasContent) {
-      return `${baseClass} ${
-        darkMode ? "bg-gray-800 border-gray-600 text-white" : "bg-white border-gray-300 text-black"
-      }`
+      return `${className} ${styles.cellEmpty}`
     }
 
     switch (state) {
       case "correct":
-        return `${baseClass} ${
-          darkMode ? "bg-green-600 text-white border-green-600" : "bg-green-500 text-white border-green-500"
-        }`
+        return `${className} ${styles.cellCorrect}`
       case "present":
-        return `${baseClass} ${
-          darkMode ? "bg-yellow-600 text-white border-yellow-600" : "bg-yellow-500 text-white border-yellow-500"
-        }`
+        return `${className} ${styles.cellPresent}`
       case "absent":
-        return `${baseClass} ${
-          darkMode ? "bg-gray-600 text-white border-gray-600" : "bg-gray-400 text-white border-gray-400"
-        }`
+        return `${className} ${styles.cellAbsent}`
       default:
-        return `${baseClass} ${
-          darkMode ? "bg-gray-700 border-gray-500 text-white" : "bg-gray-100 border-gray-400 text-black"
-        }`
+        return `${className} ${styles.cellFilled}`
     }
   }
 
+  // 키보드 키의 CSS 클래스를 결정하는 함수
   const getKeyClass = (key: string) => {
     const state = keyStates[key]
-    const baseClass = "px-2 py-2 rounded text-sm font-medium transition-colors min-w-[32px]"
+    const className = styles.key
 
     switch (state) {
       case "correct":
-        return `${baseClass} ${darkMode ? "bg-green-600 text-white" : "bg-green-500 text-white"}`
+        return `${className} ${styles.keyCorrect}`
       case "present":
-        return `${baseClass} ${darkMode ? "bg-yellow-600 text-white" : "bg-yellow-500 text-white"}`
+        return `${className} ${styles.keyPresent}`
       case "absent":
-        return `${baseClass} ${darkMode ? "bg-gray-600 text-white" : "bg-gray-400 text-white"}`
+        return `${className} ${styles.keyAbsent}`
       default:
-        return `${baseClass} ${
-          darkMode ? "bg-gray-700 text-white hover:bg-gray-600" : "bg-gray-200 text-black hover:bg-gray-300"
-        }`
+        return `${className} ${styles.keyDefault}`
     }
   }
 
-  const getKeyTooltip = (key: string) => {
-    const state = keyStates[key]
-    switch (state) {
-      case "correct":
-        return "정확한 위치를 알고 있는 글자"
-      case "present":
-        return "단어에 포함되지만 정확한 위치를 모르는 글자"
-      case "absent":
-        return "단어에 포함되지 않는 글자"
-      default:
-        return "아직 사용하지 않은 글자"
-    }
-  }
-
+  // 로딩 중일 때 표시할 화면
   if (!targetJamo.length) {
-    return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${
-          darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-        }`}
-      >
-        로딩 중...
-      </div>
-    )
+    return <div className={styles.loading}>로딩 중...</div>
   }
 
   return (
-    <div
-      className={`min-h-screen flex flex-col items-center p-4 transition-colors ${
-        darkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-      }`}
-    >
-      {/* Header */}
-      <header className="w-full max-w-2xl flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">꼬들 - 한국어</h1>
-        <div className="flex gap-2 items-center">
+    <div className={styles.container}>
+      {/* 헤더 영역 */}
+      <header className={styles.header}>
+        <h1 className={styles.title}>꼬들 - 한국어</h1>
+        <div className={styles.headerControls}>
+          {/* 사용자 정보 표시 */}
           {user && (
             <>
-              <span className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
-                {user.name}님 반갑습니다!
-              </span>
+              <span className={styles.userGreeting}>{user.name}님 반갑습니다!</span>
               <LevelBar size="small" />
-              <Link
-                href="/attendance"
-                className={`p-2 rounded-lg transition-colors ${
-                  darkMode
-                    ? "bg-gray-800 hover:bg-gray-700 text-gray-400"
-                    : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-                }`}
-                title="출석체크"
-              >
-                <Calendar className="w-5 h-5" />
+              <Link href="/attendance" className={styles.iconButton} title="출석체크">
+                <Calendar size={20} />
               </Link>
             </>
           )}
+
+          {/* 다크모드 토글 버튼 */}
           <button
             onClick={toggleDarkMode}
-            className={`p-2 rounded-lg transition-colors ${
-              darkMode ? "bg-gray-800 hover:bg-gray-700 text-yellow-400" : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-            }`}
+            className={styles.iconButton}
             title={darkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
           >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <Link
-            href="/login"
-            className={`p-2 rounded-lg transition-colors ${
-              darkMode ? "bg-gray-800 hover:bg-gray-700 text-gray-400" : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-            }`}
-            title="로그인"
-          >
-            <User className="w-5 h-5" />
+
+          {/* 기타 버튼들 */}
+          <Link href="/login" className={styles.iconButton} title="로그인">
+            <User size={20} />
           </Link>
-          <Settings className={`w-6 h-6 ${darkMode ? "text-gray-400" : "text-gray-600"}`} />
-          <HelpCircle className={`w-6 h-6 ${darkMode ? "text-gray-400" : "text-gray-600"}`} />
-          <BarChart3 className={`w-6 h-6 ${darkMode ? "text-gray-400" : "text-gray-600"}`} />
+          <Settings size={24} className={styles.icon} />
+          <HelpCircle size={24} className={styles.icon} />
+          <BarChart3 size={24} className={styles.icon} />
         </div>
       </header>
 
-      {/* Message */}
-      {message && (
-        <div
-          className={`mb-4 p-2 rounded transition-colors ${
-            darkMode ? "bg-blue-900 text-blue-200 border border-blue-700" : "bg-blue-100 text-blue-800"
-          }`}
-        >
-          {message}
-        </div>
-      )}
+      {/* 메시지 표시 영역 */}
+      {message && <div className={styles.message}>{message}</div>}
 
-      {/* Game Grid */}
+      {/* 게임 그리드 */}
       <div
-        className="mb-8"
+        className={styles.gameGrid}
         style={{
-          display: "grid",
           gridTemplateColumns: `repeat(${targetJamo.length}, 1fr)`,
-          gap: "4px",
         }}
       >
         {grid.map((row, rowIndex) =>
@@ -417,45 +361,33 @@ export default function KoreanWordle() {
         )}
       </div>
 
-      {/* Keyboard Legend */}
-      <div
-        className={`mb-4 p-3 rounded-lg text-sm max-w-4xl transition-colors ${
-          darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-gray-50 text-gray-600"
-        }`}
-      >
-        <div className="font-semibold mb-2">🎯 키보드 색상 가이드</div>
-        <div className="flex gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className={`w-4 h-4 rounded ${darkMode ? "bg-green-600" : "bg-green-500"}`}></div>
+      {/* 키보드 가이드 */}
+      <div className={styles.guide}>
+        <div className={styles.guideTitle}>🎯 키보드 색상 가이드</div>
+        <div className={styles.guideItems}>
+          <div className={styles.guideItem}>
+            <div className={`${styles.guideColor} ${styles.guideCorrect}`}></div>
             <span>정확한 위치 확정</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-4 h-4 rounded ${darkMode ? "bg-yellow-600" : "bg-yellow-500"}`}></div>
+          <div className={styles.guideItem}>
+            <div className={`${styles.guideColor} ${styles.guidePresent}`}></div>
             <span>포함되지만 위치 미확정</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-4 h-4 rounded ${darkMode ? "bg-gray-600" : "bg-gray-400"}`}></div>
+          <div className={styles.guideItem}>
+            <div className={`${styles.guideColor} ${styles.guideAbsent}`}></div>
             <span>포함되지 않음</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-4 h-4 rounded border ${
-                darkMode ? "bg-gray-700 border-gray-500" : "bg-gray-200 border-gray-300"
-              }`}
-            ></div>
+          <div className={styles.guideItem}>
+            <div className={`${styles.guideColor} ${styles.guideUnused}`}></div>
             <span>미사용</span>
           </div>
         </div>
       </div>
 
-      {/* Keyboard Mapping Help */}
-      <div
-        className={`mb-4 p-3 rounded-lg text-sm max-w-4xl transition-colors ${
-          darkMode ? "bg-gray-800 text-gray-300 border border-gray-700" : "bg-gray-50 text-gray-600"
-        }`}
-      >
-        <div className="font-semibold mb-2">⌨️ 키보드 입력 가능!</div>
-        <div className="space-y-1">
+      {/* 키보드 입력 도움말 */}
+      <div className={styles.keyboardHelp}>
+        <div className={styles.guideTitle}>⌨️ 키보드 입력 가능!</div>
+        <div className={styles.helpContent}>
           <div>
             <strong>자음:</strong> Q(ㅂ) W(ㅈ) E(ㄷ) R(ㄱ) T(ㅅ) A(ㅁ) S(ㄴ) D(ㅇ) F(ㄹ) G(ㅎ) Z(ㅋ) X(ㅌ) C(ㅊ) V(ㅍ)
           </div>
@@ -471,25 +403,16 @@ export default function KoreanWordle() {
         </div>
       </div>
 
-      {/* Korean Keyboard */}
-      <div className="w-full max-w-4xl space-y-2">
+      {/* 화면 키보드 */}
+      <div className={styles.keyboard}>
         {keyboardRows.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex justify-center gap-1 flex-wrap">
+          <div key={rowIndex} className={styles.keyboardRow}>
             {row.map((key) => (
               <button
                 key={key}
                 onClick={() => handleKeyPress(key)}
                 disabled={gameOver}
-                title={getKeyTooltip(key)}
-                className={
-                  key === "입력" || key === "삭제"
-                    ? `px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 ${
-                        darkMode
-                          ? "bg-gray-700 hover:bg-gray-600 text-white"
-                          : "bg-gray-300 hover:bg-gray-400 text-black"
-                      }`
-                    : `${getKeyClass(key)} disabled:opacity-50`
-                }
+                className={key === "입력" || key === "삭제" ? `${styles.key} ${styles.keySpecial}` : getKeyClass(key)}
               >
                 {key}
               </button>
@@ -498,14 +421,9 @@ export default function KoreanWordle() {
         ))}
       </div>
 
-      {/* New Game Button */}
+      {/* 새 게임 버튼 */}
       {gameOver && (
-        <button
-          onClick={initializeGame}
-          className={`mt-4 px-6 py-2 rounded transition-colors ${
-            darkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-blue-500 hover:bg-blue-600 text-white"
-          }`}
-        >
+        <button onClick={initializeGame} className={styles.newGameButton}>
           새 게임
         </button>
       )}
