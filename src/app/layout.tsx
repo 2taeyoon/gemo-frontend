@@ -1,12 +1,15 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { UserProvider } from "../contexts/UserContext"
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: '한글 단어 게임',
-  description: '한글 단어를 맞추는 게임',
+  title: "꼬들 - 한국어 워들 게임",
+  description: "한국어로 즐기는 워들 게임",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -16,7 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <UserProvider>{children}</UserProvider>
+      </body>
     </html>
   )
-} 
+}
