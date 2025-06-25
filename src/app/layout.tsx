@@ -1,28 +1,36 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from 'next/font/google'
-import "./globals.css"
-import { UserProvider } from "../contexts/UserContext"
 
-// Google Fonts에서 Inter 폰트를 가져옵니다
-const inter = Inter({ subsets: ["latin"] })
+import "@/styles/init.css"
+import "@/styles/darkmode.css"
+import "@/styles/fonts/pretendard.css"
 
-// 페이지의 메타데이터를 설정합니다 (브라우저 탭에 표시되는 정보)
+import { UserProvider } from "@/contexts/UserContext"
+
 export const metadata: Metadata = {
-  title: "꼬들 - 한국어 워들 게임",
-  description: "한국어로 즐기는 워들 게임",
+  title: "Gemo",
+  description: "Gemo - 간단한 게임 사이트입니다",
 }
 
-// 모든 페이지에 공통으로 적용되는 레이아웃 컴포넌트입니다
 export default function RootLayout({
-  children, // 각 페이지의 내용이 여기에 들어갑니다
+  children,
 }: {
   children: React.ReactNode
 }) {
   return (
     <html lang="ko">
-      <body className={inter.className}>
-        {/* UserProvider로 전체 앱을 감싸서 사용자 정보를 전역에서 사용할 수 있게 합니다 */}
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark"/>
+        <meta name="supported-color-schemes" content="dark"/>
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicons/home/favicon-192x192.png"/>
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicons/home/favicon-96x96.png"/>
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicons/home/favicon-32x32.png"/>
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicons/home/favicon-16x16.png"/>
+        <link rel="shortcut icon" type="image/x-icon" href="/favicons/home/favicon.ico"/>
+        <link rel="icon" href="/favicons/home/favicon.ico" title="icon"/>
+      </head>
+      <body>
         <UserProvider>{children}</UserProvider>
       </body>
     </html>

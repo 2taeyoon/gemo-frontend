@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useUser } from "../contexts/UserContext"
-import styles from "../styles/LevelBar.module.css"
+import { useUser } from "@/contexts/UserContext"
+import styles from "@/styles/modules/LevelBar.module.css"
 
 // LevelBar 컴포넌트의 props 타입 정의
 interface LevelBarProps {
