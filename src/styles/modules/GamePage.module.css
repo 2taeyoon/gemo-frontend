@@ -2,48 +2,47 @@
 
 /* 메인 컨테이너 - 전체 게임 화면을 감싸는 요소 */
 .container {
-  min-height: 100vh; /* 화면 전체 높이 */
   display: flex;
   flex-direction: column; /* 세로 방향으로 요소들을 배치 */
   align-items: center; /* 가로 중앙 정렬 */
   padding: 1rem; /* 내부 여백 */
   background-color: var(--background); /* CSS 변수로 배경색 설정 */
   color: var(--foreground); /* CSS 변수로 글자색 설정 */
-  transition: background-color 0.3s ease, color 0.3s ease; /* 다크모드 전환 애니메이션 */
+  /* transition: background-color 0.3s ease, color 0.3s ease; 다크모드 전환 애니메이션 */
 }
 
 /* 헤더 영역 - 제목과 컨트롤 버튼들이 있는 상단 영역 */
-.header {
+/* .header {
   width: 100%;
-  max-width: 48rem; /* 최대 너비 제한 */
+  max-width: 48rem;
   display: flex;
-  justify-content: space-between; /* 양쪽 끝으로 정렬 */
-  align-items: center; /* 세로 중앙 정렬 */
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
-}
+} */
 
 /* 게임 제목 */
-.title {
+/* .title {
   font-size: 1.25rem;
   font-weight: bold;
   color: var(--foreground);
-}
+} */
 
 /* 헤더 컨트롤 영역 - 버튼들을 감싸는 컨테이너 */
-.headerControls {
+/* .headerControls {
   display: flex;
-  gap: 0.5rem; /* 버튼들 사이의 간격 */
+  gap: 0.5rem;
   align-items: center;
-}
+} */
 
 /* 사용자 인사말 */
-.userGreeting {
+/* .userGreeting {
   font-size: 0.875rem;
   color: var(--muted-foreground);
-}
+} */
 
 /* 아이콘 버튼 스타일 */
-.iconButton {
+/* .iconButton {
   padding: 0.5rem;
   border-radius: 0.5rem;
   background-color: var(--muted);
@@ -57,7 +56,7 @@
 .iconButton:hover {
   background-color: var(--accent);
   color: var(--accent-foreground);
-}
+} */
 
 /* 일반 아이콘 스타일 */
 .icon {
@@ -83,15 +82,15 @@
 
 /* 개별 셀 기본 스타일 */
 .cell {
-  width: 3rem;
-  height: 3rem;
+  width: 5rem;
+  height: 5rem;
   border: 2px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
-  font-weight: bold;
-  transition: all 0.3s ease; /* 색상 변화 애니메이션 */
+  font-size: 2.4rem;
+  font-weight: 600;
+  /* transition: all 0.3s ease; 색상 변화 애니메이션 */
 }
 
 /* 빈 셀 */
@@ -211,14 +210,14 @@
 
 /* 키보드 키 기본 스타일 */
 .key {
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  min-width: 2rem;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
+	padding: 0.5rem;
+	border-radius: 0.25rem;
+	font-size: 1.4rem;
+	font-weight: 500;
+	min-width: 4rem;
+	border: none;
+	cursor: pointer;
+	min-height: 4rem;
 }
 
 .key:disabled {
