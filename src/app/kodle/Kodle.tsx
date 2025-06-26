@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import { useUser } from "@/contexts/UserContext"
 import { decomposeKorean, checkGuess } from "@/utils/korean"
-import LevelBar from "@/components/LevelBar"
+// import LevelBar from "@/components/LevelBar"
 import styles from "@/styles/modules/GamePage.module.css"
 
 // 한글 단어 데이터 타입 정의
 interface WordData {
-  words: string[]
+  easy: { word: string }[]
 }
 
 // 영어 키보드를 한글 자모로 매핑하는 객체
@@ -36,7 +36,7 @@ export default function KodlePage() {
   const [gameOver, setGameOver] = useState(false); // 게임 종료 여부
   const [won, setWon] = useState(false); // 게임 승리 여부
   const [message, setMessage] = useState(""); // 사용자에게 보여줄 메시지
-  const [darkMode, setDarkMode] = useState(false); // 다크모드 여부
+  
 
   // 게임 그리드 - 사용자가 입력한 글자들을 저장
   const [grid, setGrid] = useState<string[][]>([]);
@@ -50,23 +50,7 @@ export default function KodlePage() {
     [key: string]: "correct" | "present" | "absent" | "";
   }>({});
 
-  // 컴포넌트가 처음 렌더링될 때 다크모드 설정을 localStorage에서 불러옵니다
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem("darkMode");
-    if (savedDarkMode) {
-      setDarkMode(JSON.parse(savedDarkMode));
-    }
-  }, []);
 
-  // 다크모드가 변경될 때마다 localStorage에 저장하고 body 클래스를 업데이트합니다
-  useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(darkMode));
-    if (darkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
-  }, [darkMode]);
 
   // 컴포넌트가 처음 렌더링될 때 게임을 초기화합니다
   useEffect(() => {
@@ -128,8 +112,8 @@ export default function KodlePage() {
       const data: WordData = await response.json();
 
       // 랜덤하게 단어를 선택합니다
-      const randomWord =
-        data.words[Math.floor(Math.random() * data.words.length)];
+      const randomWordData = data.easy[Math.floor(Math.random() * data.easy.length)];
+      const randomWord = randomWordData.word;
 
       // 선택된 단어를 자모로 분해합니다
       const decomposed = decomposeKorean(randomWord);
@@ -259,11 +243,6 @@ export default function KodlePage() {
     }
   };
 
-  // 다크모드 토글 함수
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
   // 셀의 CSS 클래스를 결정하는 함수
   const getCellClass = (state: string, hasContent: boolean) => {
     const className = styles.cell;
@@ -309,42 +288,34 @@ export default function KodlePage() {
   return (
     <div className={styles.container}>
       {/* 헤더 영역 */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>꼬들 - 한국어</h1>
+      {/* <header className={styles.header}>
+        <h1 className={styles.title}>Kodle - 한국어 워들 게임</h1>
         <div className={styles.headerControls}>
-          {/* 사용자 정보 표시 */}
+          사용자 정보 표시
           {user && (
             <>
               <span className={styles.userGreeting}>
                 {user.name}님 반갑습니다!
               </span>
               <LevelBar size="small" />
-              {/* <Link href="/attendance" className={styles.iconButton} title="출석체크">
+              <Link href="/attendance" className={styles.iconButton} title="출석체크">
 							<Calendar size={20} />
-						</Link> */}
+						</Link>
             </>
           )}
 
-          {/* 다크모드 토글 버튼 */}
-          <button
-            onClick={toggleDarkMode}
-            className={styles.iconButton}
-            title={darkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}>
-            {/* {darkMode ? <Sun size={20} /> : <Moon size={20} />} */}
-          </button>
-
-          {/* 기타 버튼들 */}
-          {/* <Link href="/login" className={styles.iconButton} title="로그인">
+          기타 버튼들
+          <Link href="/login" className={styles.iconButton} title="로그인">
 					<User size={20} />
 				</Link>
 				<Settings size={24} className={styles.icon} />
 				<HelpCircle size={24} className={styles.icon} />
-				<BarChart3 size={24} className={styles.icon} /> */}
+				<BarChart3 size={24} className={styles.icon} />
         </div>
-      </header>
+      </header> */}
 
       {/* 메시지 표시 영역 */}
-      {message && <div className={styles.message}>{message}</div>}
+      {/* {message && <div className={styles.message}>{message}</div>} */}
 
       {/* 게임 그리드 */}
       <div
