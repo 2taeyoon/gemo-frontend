@@ -1,16 +1,10 @@
 @charset "UTF-8";
 
-/* ::selection {
-  background: var(--themabright);
-  color: var(--whiteF9);
-} */
-
 body {
   max-width: 100%;
-	background: #fff;
+	background-color: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-	transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 html, body, div, span, applet, object, iframe,
@@ -34,6 +28,7 @@ time, mark, audio, video, textarea, input, button {
   font-weight: 400;
 	letter-spacing: -0.5px;
   font-family: "Pretendard", "Malgun Gothic", sans-serif;
+	/* transition: background-color 0.3s ease, color 0.3s ease; */
 }
 
 html {

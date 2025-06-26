@@ -1,7 +1,9 @@
 /* 라이트모드 색상 */
 :root {
   --background: #ffffff;
-  --foreground: #000000;
+  --foreground: #212121;
+	--background-accent: #f1f1f1;
+
   --card: #ffffff;
   --card-foreground: #000000;
   --primary: #3b82f6;
@@ -22,8 +24,10 @@
 
 /* 다크모드 색상 */
 .dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
+  --background: #212121;
+  --foreground: #ffffff;
+	--background-accent: #151515;
+
   --card: #1e293b;
   --card-foreground: #f8fafc;
   --primary: #3b82f6;
