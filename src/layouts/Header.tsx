@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import styles from "@/styles/modules/Header.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -64,8 +63,8 @@ export default function Header() {
   const currentConfig = getCurrentConfig();
 
   return (
-    <header className={`${styles.header}`}>
-      <div className={`${styles.headerContainer} inner`}>
+    <header className="header">
+      <div className="headerContainer inner">
 				{/* <Link href={currentConfig.link} className={styles.headerLogo}>
 					<Image 
 						src={darkMode ? currentConfig.logo.dark : currentConfig.logo.light} 
@@ -73,8 +72,8 @@ export default function Header() {
 						style={{ width: '5rem', height: '5rem' }}
 					/>
 					</Link> */}
-				<Link href={currentConfig.link} className={styles.headerLogoWrapper}>
-					<div className={styles.headerLogo}>
+                                <Link href={currentConfig.link} className="headerLogoWrapper">
+                                        <div className="headerLogo">
 						<Image src={darkMode ? currentConfig.logo.dark : currentConfig.logo.light}
 							alt="gemo_logo" draggable={false} fill sizes="5rem"
 							style={{ objectFit: 'cover' }}
@@ -82,7 +81,7 @@ export default function Header() {
 					</div>
 					<h4>{currentConfig.text}</h4>
 				</Link>
-        <div className={styles.headerControls}>
+        <div className="headerControls">
           {/* 사용자 정보 표시 */}
           {/* {user && (
 						<>
@@ -99,7 +98,7 @@ export default function Header() {
           {/* 다크모드 토글 버튼 */}
           <button
             onClick={toggleDarkMode}
-            className={styles.iconButton}
+            className="iconButton"
             title={darkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}>
             {/* {darkMode ? <Sun size={20} /> : <Moon size={20} />} */}
           </button>

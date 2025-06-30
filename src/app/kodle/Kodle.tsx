@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useUser } from "@/contexts/UserContext"
 import { decomposeKorean, checkGuess } from "@/utils/korean"
 // import LevelBar from "@/components/LevelBar"
-import styles from "@/styles/modules/GamePage.module.css"
 
 // 한글 단어 데이터 타입 정의
 interface WordData {
@@ -245,48 +244,48 @@ export default function KodlePage() {
 
   // 셀의 CSS 클래스를 결정하는 함수
   const getCellClass = (state: string, hasContent: boolean) => {
-    const className = styles.cell;
+    const className = "cell";
 
     if (!hasContent) {
-      return `${className} ${styles.cellEmpty}`;
+      return `${className} cellEmpty`;
     }
 
     switch (state) {
       case "correct":
-        return `${className} ${styles.cellCorrect}`;
+        return `${className} cellCorrect`;
       case "present":
-        return `${className} ${styles.cellPresent}`;
+        return `${className} cellPresent`;
       case "absent":
-        return `${className} ${styles.cellAbsent}`;
+        return `${className} cellAbsent`;
       default:
-        return `${className} ${styles.cellFilled}`;
+        return `${className} cellFilled`;
     }
   };
 
   // 키보드 키의 CSS 클래스를 결정하는 함수
   const getKeyClass = (key: string) => {
     const state = keyStates[key];
-    const className = styles.key;
+    const className = "key";
 
     switch (state) {
       case "correct":
-        return `${className} ${styles.keyCorrect}`;
+        return `${className} keyCorrect`;
       case "present":
-        return `${className} ${styles.keyPresent}`;
+        return `${className} keyPresent`;
       case "absent":
-        return `${className} ${styles.keyAbsent}`;
+        return `${className} keyAbsent`;
       default:
-        return `${className} ${styles.keyDefault}`;
+        return `${className} keyDefault`;
     }
   };
 
   // 로딩 중일 때 표시할 화면
   if (!targetJamo.length) {
-    return <div className={styles.loading}>로딩 중...</div>;
+    return <div className="loading">로딩 중...</div>;
   }
 
   return (
-    <div className={styles.container}>
+    <div className="container">
       {/* 헤더 영역 */}
       {/* <header className={styles.header}>
         <h1 className={styles.title}>Kodle - 한국어 워들 게임</h1>
@@ -319,7 +318,7 @@ export default function KodlePage() {
 
       {/* 게임 그리드 */}
       <div
-        className={styles.gameGrid}
+        className="gameGrid"
         style={{
           gridTemplateColumns: `repeat(${targetJamo.length}, 1fr)`,
         }}>
@@ -338,34 +337,34 @@ export default function KodlePage() {
       </div>
 
       {/* 키보드 가이드 */}
-      <div className={styles.guide}>
-        <div className={styles.guideTitle}>🎯 키보드 색상 가이드</div>
-        <div className={styles.guideItems}>
-          <div className={styles.guideItem}>
+      <div className="guide">
+        <div className="guideTitle">🎯 키보드 색상 가이드</div>
+        <div className="guideItems">
+          <div className="guideItem">
             <div
-              className={`${styles.guideColor} ${styles.guideCorrect}`}></div>
+              className={`guideColor guideCorrect`}></div>
             <span>정확한 위치 확정</span>
           </div>
-          <div className={styles.guideItem}>
+          <div className="guideItem">
             <div
-              className={`${styles.guideColor} ${styles.guidePresent}`}></div>
+              className={`guideColor guidePresent`}></div>
             <span>포함되지만 위치 미확정</span>
           </div>
-          <div className={styles.guideItem}>
-            <div className={`${styles.guideColor} ${styles.guideAbsent}`}></div>
+          <div className="guideItem">
+            <div className={`guideColor guideAbsent`}></div>
             <span>포함되지 않음</span>
           </div>
-          <div className={styles.guideItem}>
-            <div className={`${styles.guideColor} ${styles.guideUnused}`}></div>
+          <div className="guideItem">
+            <div className={`guideColor guideUnused`}></div>
             <span>미사용</span>
           </div>
         </div>
       </div>
 
       {/* 키보드 입력 도움말 */}
-      <div className={styles.keyboardHelp}>
-        <div className={styles.guideTitle}>⌨️ 키보드 입력 가능!</div>
-        <div className={styles.helpContent}>
+      <div className="keyboardHelp">
+        <div className="guideTitle">⌨️ 키보드 입력 가능!</div>
+        <div className="helpContent">
           <div>
             <strong>자음:</strong> Q(ㅂ) W(ㅈ) E(ㄷ) R(ㄱ) T(ㅅ) A(ㅁ) S(ㄴ)
             D(ㅇ) F(ㄹ) G(ㅎ) Z(ㅋ) X(ㅌ) C(ㅊ) V(ㅍ)
@@ -384,9 +383,9 @@ export default function KodlePage() {
       </div>
 
       {/* 화면 키보드 */}
-      <div className={styles.keyboard}>
+      <div className="keyboard">
         {keyboardRows.map((row, rowIndex) => (
-          <div key={rowIndex} className={styles.keyboardRow}>
+          <div key={rowIndex} className="keyboardRow">
             {row.map((key) => (
               <button
                 key={key}
@@ -394,7 +393,7 @@ export default function KodlePage() {
                 disabled={gameOver}
                 className={
                   key === "입력" || key === "삭제"
-                    ? `${styles.key} ${styles.keySpecial}`
+                    ? `key keySpecial`
                     : getKeyClass(key)
                 }>
                 {key}
@@ -406,7 +405,7 @@ export default function KodlePage() {
 
       {/* 새 게임 버튼 */}
       {gameOver && (
-        <button onClick={initializeGame} className={styles.newGameButton}>
+        <button onClick={initializeGame} className="newGameButton">
           새 게임
         </button>
       )}

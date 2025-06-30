@@ -5,6 +5,7 @@ import "@/styles/global.css"
 import "@/styles/darkmode.css"
 import "@/styles/common.css"
 import "@/styles/fonts/pretendard.css"
+import "@/styles/components.css"
 
 import { UserProvider } from "@/contexts/UserContext"
 import Header from "@/layouts/Header"
