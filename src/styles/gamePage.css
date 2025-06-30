@@ -74,7 +74,7 @@
 }
 
 /* 게임 그리드 - 글자를 입력하는 격자 */
-.gameGrid {
+.game_grid {
   display: grid;
   gap: 0.25rem; /* 셀 사이의 간격 */
   margin-bottom: 2rem;
@@ -100,28 +100,28 @@
 }
 
 /* 글자가 입력된 셀 */
-.cellFilled {
+.cell_filled {
   background-color: var(--muted);
   color: var(--foreground);
   border-color: var(--muted-foreground);
 }
 
 /* 정답 위치의 셀 (초록색) */
-.cellCorrect {
+.cell_correct {
   background-color: #22c55e;
   color: white;
   border-color: #22c55e;
 }
 
 /* 단어에 포함되지만 위치가 틀린 셀 (노란색) */
-.cellPresent {
+.cell_present {
   background-color: #eab308;
   color: white;
   border-color: #eab308;
 }
 
 /* 단어에 포함되지 않는 셀 (회색) */
-.cellAbsent {
+.cell_absent {
   background-color: #6b7280;
   color: white;
   border-color: #6b7280;
@@ -129,7 +129,7 @@
 
 /* 가이드 영역 공통 스타일 */
 .guide,
-.keyboardHelp {
+.keyboard_help {
   margin-bottom: 1rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
@@ -141,51 +141,51 @@
 }
 
 /* 가이드 제목 */
-.guideTitle {
+.guide_title {
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 /* 가이드 아이템들을 감싸는 컨테이너 */
-.guideItems {
+.guide_items {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap; /* 화면이 좁을 때 줄바꿈 */
 }
 
 /* 개별 가이드 아이템 */
-.guideItem {
+.guide_item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 /* 가이드 색상 표시 박스 */
-.guideColor {
+.guide_color {
   width: 1rem;
   height: 1rem;
   border-radius: 0.25rem;
 }
 
-.guideCorrect {
+.guide_correct {
   background-color: #22c55e;
 }
 
-.guidePresent {
+.guide_present {
   background-color: #eab308;
 }
 
-.guideAbsent {
+.guide_absent {
   background-color: #6b7280;
 }
 
-.guideUnused {
+.guide_unused {
   background-color: var(--border);
   border: 1px solid var(--border);
 }
 
 /* 키보드 도움말 내용 */
-.helpContent {
+.help_content {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -201,7 +201,7 @@
 }
 
 /* 키보드 행 */
-.keyboardRow {
+.keyboard_row {
   display: flex;
   justify-content: center;
   gap: 0.25rem;
@@ -226,46 +226,46 @@
 }
 
 /* 기본 키 스타일 */
-.keyDefault {
+.key_default {
   background-color: var(--muted);
   color: var(--foreground);
 }
 
-.keyDefault:hover:not(:disabled) {
+.key_default:hover:not(:disabled) {
   background-color: var(--accent);
 }
 
 /* 정답 키 (초록색) */
-.keyCorrect {
+.key_correct {
   background-color: #22c55e;
   color: white;
 }
 
 /* 포함된 키 (노란색) */
-.keyPresent {
+.key_present {
   background-color: #eab308;
   color: white;
 }
 
 /* 없는 키 (회색) */
-.keyAbsent {
+.key_absent {
   background-color: #6b7280;
   color: white;
 }
 
 /* 특수 키 (입력, 삭제) */
-.keySpecial {
+.key_special {
   background-color: var(--accent);
   color: var(--accent-foreground);
   padding: 0.5rem 1rem;
 }
 
-.keySpecial:hover:not(:disabled) {
+.key_special:hover:not(:disabled) {
   background-color: var(--muted);
 }
 
 /* 새 게임 버튼 */
-.newGameButton {
+.new_game_button {
   margin-top: 1rem;
   padding: 0.5rem 1.5rem;
   border-radius: 0.5rem;
@@ -277,7 +277,7 @@
   transition: background-color 0.2s ease;
 }
 
-.newGameButton:hover {
+.new_game_button:hover {
   opacity: 0.9;
 }
 
@@ -304,7 +304,7 @@
     text-align: center;
   }
 
-  .headerControls {
+  .header_controls {
     flex-wrap: wrap;
     justify-content: center;
   }
@@ -322,11 +322,11 @@
   }
 
   .guide,
-  .keyboardHelp {
+  .keyboard_help {
     font-size: 0.75rem;
   }
 
-  .guideItems {
+  .guide_items {
     flex-direction: column;
     gap: 0.5rem;
   }
