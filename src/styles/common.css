@@ -11,15 +11,25 @@ span {	font-size: 1.6rem; font-weight: 400; color: var(--foreground); }
 
 
 
-/* 레이아웃 설정 START! */
+/* 기본 레이아웃 설정 START! */
 .inner {
 	width: 100%;
 	max-width: 124rem;
 	margin: 0 auto;
 	padding: 0 4rem;
 }
-/* 레이아웃 설정 END! */
+/* 기본 레이아웃 설정 END! */
 
+
+.loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-size: 1.6rem;
+}
 
 
 @media screen and (max-width: 768px) {

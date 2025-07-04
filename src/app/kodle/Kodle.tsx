@@ -253,13 +253,13 @@ export default function KodlePage() {
 
     switch (state) {
       case "correct":
-        return `${className} cellCorrect`;
+        return `${className} cell_correct`;
       case "present":
-        return `${className} cellPresent`;
+        return `${className} cell_present`;
       case "absent":
-        return `${className} cellAbsent`;
+        return `${className} cell_absent`;
       default:
-        return `${className} cellFilled`;
+        return `${className} cell_filled`;
     }
   };
 
