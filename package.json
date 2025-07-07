@@ -9,8 +9,11 @@
     "start": "next start"
   },
   "dependencies": {
+    "@auth/mongodb-adapter": "^3.10.0",
     "clsx": "^2.1.1",
+    "mongodb": "^6.17.0",
     "next": "15.2.4",
+    "next-auth": "^4.24.11",
     "radix-ui": "^1.4.2",
     "react": "^19",
     "react-dom": "^19"
