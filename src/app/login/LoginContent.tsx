@@ -1,38 +1,38 @@
 "use client";
 
 import { signIn, getProviders } from "next-auth/react";
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+// import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 // 에러 메시지를 표시하는 별도 컴포넌트
-function ErrorMessage() {
-  const searchParams = useSearchParams();
-  const error = searchParams?.get("error");
+// function ErrorMessage() {
+//   const searchParams = useSearchParams();
+//   const error = searchParams?.get("error");
 
-  if (!error) return null;
+//   if (!error) return null;
 
-  return (
-    <div
-      style={{
-        backgroundColor: "#fee",
-        color: "#c33",
-        padding: "12px",
-        borderRadius: "6px",
-        marginBottom: "20px",
-        textAlign: "center",
-        fontSize: "14px",
-      }}
-    >
-      {error === "OAuthSignin" &&
-        "OAuth 로그인 중 오류가 발생했습니다. Google OAuth 설정을 확인해주세요."}
-      {error === "OAuthCallback" && "OAuth 콜백 오류가 발생했습니다."}
-      {error === "Configuration" && "로그인 설정에 문제가 있습니다."}
-      {!["OAuthSignin", "OAuthCallback", "Configuration"].includes(error) &&
-        "로그인 중 오류가 발생했습니다."}
-    </div>
-  );
-}
+//   return (
+//     <div
+//       style={{
+//         backgroundColor: "#fee",
+//         color: "#c33",
+//         padding: "12px",
+//         borderRadius: "6px",
+//         marginBottom: "20px",
+//         textAlign: "center",
+//         fontSize: "14px",
+//       }}
+//     >
+//       {error === "OAuthSignin" &&
+//         "OAuth 로그인 중 오류가 발생했습니다. Google OAuth 설정을 확인해주세요."}
+//       {error === "OAuthCallback" && "OAuth 콜백 오류가 발생했습니다."}
+//       {error === "Configuration" && "로그인 설정에 문제가 있습니다."}
+//       {!["OAuthSignin", "OAuthCallback", "Configuration"].includes(error) &&
+//         "로그인 중 오류가 발생했습니다."}
+//     </div>
+//   );
+// }
 
 export default function LoginContent() {
   const [providers, setProviders] = useState<any>(null);
@@ -58,7 +58,7 @@ export default function LoginContent() {
   };
 
   return (
-    <Suspense fallback={<div>로딩 중...</div>}>
+    
 			<div
 				style={{
 					minHeight: "100vh",
@@ -90,7 +90,7 @@ export default function LoginContent() {
 					>
 						로그인
 					</h1>
-					<ErrorMessage />
+					{/* <ErrorMessage /> */}
 					
 
 					{!providers || Object.keys(providers).length === 0 ? (
@@ -188,7 +188,7 @@ export default function LoginContent() {
 					</div>
 				</div>
 			</div>
-    </Suspense>
+    
   );
 }
 
