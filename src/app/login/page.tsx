@@ -5,13 +5,38 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
+// 에러 메시지를 표시하는 별도 컴포넌트
+function ErrorMessage() {
+  const searchParams = useSearchParams();
+  const error = searchParams?.get("error");
 
+  if (!error) return null;
+
+  return (
+    <div
+      style={{
+        backgroundColor: "#fee",
+        color: "#c33",
+        padding: "12px",
+        borderRadius: "6px",
+        marginBottom: "20px",
+        textAlign: "center",
+        fontSize: "14px",
+      }}
+    >
+      {error === "OAuthSignin" &&
+        "OAuth 로그인 중 오류가 발생했습니다. Google OAuth 설정을 확인해주세요."}
+      {error === "OAuthCallback" && "OAuth 콜백 오류가 발생했습니다."}
+      {error === "Configuration" && "로그인 설정에 문제가 있습니다."}
+      {!["OAuthSignin", "OAuthCallback", "Configuration"].includes(error) &&
+        "로그인 중 오류가 발생했습니다."}
+    </div>
+  );
+}
 
 function LoginForm() {
   const [providers, setProviders] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const error = searchParams?.get("error");
 
   useEffect(() => {
     const getProvidersData = async () => {
@@ -65,26 +90,10 @@ function LoginForm() {
           로그인
         </h1>
 
-        {error && (
-          <div
-            style={{
-              backgroundColor: "#fee",
-              color: "#c33",
-              padding: "12px",
-              borderRadius: "6px",
-              marginBottom: "20px",
-              textAlign: "center",
-              fontSize: "14px",
-            }}
-          >
-            {error === "OAuthSignin" &&
-              "OAuth 로그인 중 오류가 발생했습니다. Google OAuth 설정을 확인해주세요."}
-            {error === "OAuthCallback" && "OAuth 콜백 오류가 발생했습니다."}
-            {error === "Configuration" && "로그인 설정에 문제가 있습니다."}
-            {!["OAuthSignin", "OAuthCallback", "Configuration"].includes(error) &&
-              "로그인 중 오류가 발생했습니다."}
-          </div>
-        )}
+        {/* 에러 메시지 컴포넌트를 Suspense로 감싸기 */}
+        <Suspense fallback={null}>
+          <ErrorMessage />
+        </Suspense>
 
         {!providers || Object.keys(providers).length === 0 ? (
           <div
@@ -184,7 +193,7 @@ function LoginForm() {
   );
 }
 
-// 🔒 useSearchParams()가 있으므로 Suspense로 감싸줌
+// 메인 페이지 컴포넌트
 export default function LoginPage() {
   return (
     <Suspense fallback={<div>로딩 중...</div>}>
