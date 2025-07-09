@@ -1,4 +1,5 @@
 import clientPromise from './mongodb';
+import { getKoreanDate, formatKoreanDateTime } from '../utils/date';
 
 export interface UserProfile {
   userId: string;
@@ -10,15 +11,14 @@ export interface UserProfile {
     updatedAt: Date;
   };
   gameData: {
-    level: number;
+    totalLevel: number;
     totalScore: number;
-    gamesPlayed: number;
+    kodleTotalPlayed: number;
     achievements: string[];
     lastPlayed?: Date;
   };
   preferences: {
-    theme: 'light' | 'dark';
-    language: 'ko' | 'en';
+    thema: 'light' | 'dark';
     notifications: boolean;
   };
 }
@@ -27,7 +27,7 @@ export class UserService {
   private static async getCollection() {
     const client = await clientPromise;
     const db = client.db('gemo');
-    return db.collection<UserProfile>('userProfiles');
+    return db.collection<UserProfile>('users');
   }
 
   // 새 사용자 프로필 생성
@@ -45,18 +45,17 @@ export class UserService {
         name: userData.name,
         email: userData.email,
         image: userData.image,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: getKoreanDate(),
+        updatedAt: getKoreanDate(),
       },
       gameData: {
-        level: 1,
+        totalLevel: 1,
         totalScore: 0,
-        gamesPlayed: 0,
+        kodleTotalPlayed: 0,
         achievements: [],
       },
       preferences: {
-        theme: 'light',
-        language: 'ko',
+        thema: 'light',
         notifications: true,
       }
     };
@@ -84,7 +83,7 @@ export class UserService {
           ...Object.fromEntries(
             Object.entries(gameData).map(([key, value]) => [`gameData.${key}`, value])
           ),
-          'profile.updatedAt': new Date(),
+          'profile.updatedAt': formatKoreanDateTime(getKoreanDate()),
         } 
       }
     );
@@ -103,7 +102,7 @@ export class UserService {
           ...Object.fromEntries(
             Object.entries(preferences).map(([key, value]) => [`preferences.${key}`, value])
           ),
-          'profile.updatedAt': new Date(),
+          'profile.updatedAt': getKoreanDate(),
         } 
       }
     );
@@ -120,11 +119,10 @@ export class UserService {
       { 
         $inc: { 
           'gameData.totalScore': score,
-          'gameData.gamesPlayed': 1,
+          'gameData.kodleTotalPlayed': 1,
         },
         $set: {
-          'gameData.lastPlayed': new Date(),
-          'profile.updatedAt': new Date(),
+          'gameData.lastPlayed': formatKoreanDateTime(getKoreanDate()),
         }
       }
     );
@@ -140,7 +138,7 @@ export class UserService {
       { userId },
       { 
         $addToSet: { 'gameData.achievements': achievement },
-        $set: { 'profile.updatedAt': new Date() }
+        $set: { 'profile.updatedAt': getKoreanDate() }
       }
     );
     

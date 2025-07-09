@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 
 import "@/styles/global.css"
 import "@/styles/common.css"
@@ -11,7 +10,6 @@ import { UserProvider } from "@/contexts/UserContext"
 import Header from "@/components/layouts/Header"
 import SessionWrapper from "@/components/SessionWrapper"
 
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Gemo",
@@ -39,7 +37,7 @@ export default function RootLayout({
         <meta name="color-scheme" content="dark light"/>
         <meta name="supported-color-schemes" content="dark"/>
       </head>
-      <body className={inter.className}>
+      <body>
         <SessionWrapper>
           <UserProvider>
             <Header />
