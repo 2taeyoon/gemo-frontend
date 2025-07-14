@@ -1,0 +1,81 @@
+/* 로그인 페이지 전체 컨테이너 */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-color, #f5f5f5);
+  padding: 20px;
+}
+
+/* 로그인 카드 */
+.login-card {
+  background-color: var(--card-bg, white);
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+/* 로그인 제목 */
+.login-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: var(--text-color, #333);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+/* 로그인 버튼 */
+.login-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  transition: opacity 0.2s ease;
+}
+
+/* 구글 로그인 버튼 */
+.login-button--google {
+  background-color: #db4437;
+  color: white;
+}
+
+/* 기본 로그인 버튼 */
+.login-button--default {
+  background-color: #333;
+  color: white;
+}
+
+/* 로딩 상태 버튼 */
+.login-button--loading {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 홈 링크 컨테이너 */
+.home-link-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* 홈 링크 */
+.home-link {
+  color: #0070f3;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* 홈 링크 호버 효과 */
+.home-link:hover {
+  text-decoration: underline;
+} 
