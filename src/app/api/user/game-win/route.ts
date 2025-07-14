@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
+import { ObjectId } from 'mongodb';
 
-
-// NextAuth 설정 (route.ts와 동일)
+// NextAuth 설정 (JWT 기반)
 const authOptions = {
   providers: [
     GoogleProvider({
@@ -13,7 +12,6 @@ const authOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
-  adapter: MongoDBAdapter(clientPromise),
   secret: process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-development",
   session: {
     strategy: "jwt" as const,
@@ -60,13 +58,13 @@ export async function POST(request: NextRequest) {
 
     // 게임 승리 처리
     await usersCollection.updateOne(
-      { _id: userId },
+      { _id: new ObjectId(userId) },
       { $inc: { 'gameData.gameWins': 1, 'gameData.consecutiveWins': 1 } }
     );
 
     // 업데이트된 사용자 프로필 조회
     const updatedProfile = await usersCollection.findOne(
-      { _id: userId },
+      { _id: new ObjectId(userId) },
       { projection: { 'gameData': 1 } }
     );
 
