@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import clientPromise from '@/lib/mongodb';
+import { MongoDBAdapter } from '@auth/mongodb-adapter';
 
 
 // NextAuth 설정 (route.ts와 동일)
@@ -52,11 +54,21 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
+    const client = await clientPromise;
+    const db = client.db('gemo');
+    const usersCollection = db.collection('users');
+
     // 게임 승리 처리
-    await UserService.addGameWin(userId);
+    await usersCollection.updateOne(
+      { _id: userId },
+      { $inc: { 'gameData.gameWins': 1, 'gameData.consecutiveWins': 1 } }
+    );
 
     // 업데이트된 사용자 프로필 조회
-    const updatedProfile = await UserService.getUserProfile(userId);
+    const updatedProfile = await usersCollection.findOne(
+      { _id: userId },
+      { projection: { 'gameData': 1 } }
+    );
 
     return NextResponse.json({
       success: true,
