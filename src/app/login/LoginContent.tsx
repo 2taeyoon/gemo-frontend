@@ -2,42 +2,22 @@
 
 import { signIn, getProviders } from "next-auth/react";
 import { useState, useEffect } from "react";
-// import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import "../../styles/login.css";
 
-// 에러 메시지를 표시하는 별도 컴포넌트
-// function ErrorMessage() {
-//   const searchParams = useSearchParams();
-//   const error = searchParams?.get("error");
-
-//   if (!error) return null;
-
-//   return (
-//     <div
-//       style={{
-//         backgroundColor: "#fee",
-//         color: "#c33",
-//         padding: "12px",
-//         borderRadius: "6px",
-//         marginBottom: "20px",
-//         textAlign: "center",
-//         fontSize: "14px",
-//       }}
-//     >
-//       {error === "OAuthSignin" &&
-//         "OAuth 로그인 중 오류가 발생했습니다. Google OAuth 설정을 확인해주세요."}
-//       {error === "OAuthCallback" && "OAuth 콜백 오류가 발생했습니다."}
-//       {error === "Configuration" && "로그인 설정에 문제가 있습니다."}
-//       {!["OAuthSignin", "OAuthCallback", "Configuration"].includes(error) &&
-//         "로그인 중 오류가 발생했습니다."}
-//     </div>
-//   );
-// }
-
+/**
+ * 로그인 페이지 메인 컴포넌트
+ * Google OAuth를 통한 사용자 로그인 기능을 제공합니다.
+ */
 export default function LoginContent() {
+  // 로그인 제공자 목록을 저장하는 상태
   const [providers, setProviders] = useState<any>(null);
+  // 로그인 진행 상태를 관리하는 상태
   const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * 컴포넌트 마운트 시 로그인 제공자 정보를 가져옵니다.
+   */
   useEffect(() => {
     const getProvidersData = async () => {
       const res = await getProviders();
@@ -46,9 +26,14 @@ export default function LoginContent() {
     getProvidersData();
   }, []);
 
+  /**
+   * 로그인 제공자별 로그인 처리 함수
+   * @param providerId - 로그인 제공자 ID (예: 'google')
+   */
   const handleProviderSignIn = async (providerId: string) => {
     setIsLoading(true);
     try {
+      // 로그인 성공 시 홈페이지로 리디렉션
       await signIn(providerId, { callbackUrl: "/" });
     } catch (error) {
       console.error("로그인 에러:", error);
@@ -58,144 +43,33 @@ export default function LoginContent() {
   };
 
   return (
-    
-			<div
-				style={{
-					minHeight: "100vh",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					backgroundColor: "var(--bg-color, #f5f5f5)",
-					padding: "20px",
-				}}
-			>
-				<div
-					style={{
-						backgroundColor: "var(--card-bg, white)",
-						padding: "40px",
-						borderRadius: "12px",
-						boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-						width: "100%",
-						maxWidth: "400px",
-					}}
-				>
-					<h1
-						style={{
-							textAlign: "center",
-							marginBottom: "30px",
-							color: "var(--text-color, #333)",
-							fontSize: "28px",
-							fontWeight: "600",
-						}}
-					>
-						로그인
-					</h1>
-					{/* <ErrorMessage /> */}
-					
+    <div className="login-container">
+      <div className="login-card">
+        <h1 className="login-title">로그인</h1>
 
-					{!providers || Object.keys(providers).length === 0 ? (
-						<div
-							style={{
-								textAlign: "center",
-								padding: "20px",
-								backgroundColor: "#f0f8ff",
-								borderRadius: "8px",
-								marginBottom: "20px",
-							}}
-						>
-							<h3 style={{ color: "#0066cc", marginBottom: "15px" }}>
-								환경변수 설정이 필요합니다
-							</h3>
-							<p
-								style={{
-									color: "#666",
-									fontSize: "14px",
-									lineHeight: "1.5",
-									marginBottom: "15px",
-								}}
-							>
-								Google OAuth 로그인을 사용하려면 다음 환경변수를 설정해주세요:
-							</p>
-							<div
-								style={{
-									textAlign: "left",
-									backgroundColor: "#f8f9fa",
-									padding: "15px",
-									borderRadius: "4px",
-									fontFamily: "monospace",
-									fontSize: "12px",
-									color: "#333",
-								}}
-							>
-								NEXTAUTH_URL=http://localhost:3000
-								<br />
-								NEXTAUTH_SECRET=your-secret-key
-								<br />
-								GOOGLE_CLIENT_ID=your-google-client-id
-								<br />
-								GOOGLE_CLIENT_SECRET=your-google-client-secret
-							</div>
-							<p
-								style={{ color: "#666", fontSize: "12px", marginTop: "10px" }}
-							>
-								.env.local 파일에 위 내용을 추가하고 서버를 재시작해주세요.
-							</p>
-						</div>
-					) : (
-						Object.values(providers).map((provider: any) => (
-							<button
-								key={provider.id}
-								onClick={() => handleProviderSignIn(provider.id)}
-								disabled={isLoading}
-								style={{
-									width: "100%",
-									padding: "12px",
-									backgroundColor:
-										provider.id === "google" ? "#db4437" : "#333",
-									color: "white",
-									border: "none",
-									borderRadius: "6px",
-									fontSize: "14px",
-									fontWeight: "500",
-									cursor: isLoading ? "not-allowed" : "pointer",
-									opacity: isLoading ? 0.7 : 1,
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									gap: "8px",
-									marginBottom: "12px",
-								}}
-							>
-								{provider.id === "google" && "🔗"}
-								{isLoading
-									? "로그인 중..."
-									: `${provider.name}으로 로그인`}
-							</button>
-						))
-					)}
+        {/* 로그인 제공자가 있는 경우 로그인 버튼들을 표시 */}
+        {providers && Object.values(providers).map((provider: any) => (
+          <button
+            key={provider.id}
+            onClick={() => handleProviderSignIn(provider.id)}
+            disabled={isLoading}
+            className={`login-button ${
+              provider.id === "google" ? "login-button--google" : "login-button--default"
+            } ${isLoading ? "login-button--loading" : ""}`}
+          >
+            {/* 구글 로그인 버튼에는 아이콘 추가 */}
+            {provider.id === "google" && "🔗"}
+            {isLoading ? "로그인 중..." : `${provider.name}으로 로그인`}
+          </button>
+        ))}
 
-					<div style={{ textAlign: "center", marginTop: "20px" }}>
-						<Link
-							href="/"
-							style={{
-								color: "#0070f3",
-								textDecoration: "none",
-								fontSize: "14px",
-							}}
-						>
-							← 홈으로 돌아가기
-						</Link>
-					</div>
-				</div>
-			</div>
-    
+        {/* 홈으로 돌아가기 링크 */}
+        <div className="home-link-container">
+          <Link href="/" className="home-link">
+            ← 홈으로 돌아가기
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
-
-// // LoginContent 컴포넌트를 기본 내보내기로 설정
-// export default function LoginContent() {
-//   return (
-//     <Suspense fallback={<div>로딩 중...</div>}>
-//       <LoginForm />
-//     </Suspense>
-//   );
