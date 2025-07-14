@@ -6,13 +6,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useUser } from "@/contexts/UserContext";
+import LevelBar from "@/components/LevelBar";
 
+/**
+ * 헤더 컴포넌트
+ * 로고, 네비게이션, 사용자 정보, 레벨바를 표시합니다.
+ */
 export default function Header() {
-  const [darkMode, setDarkMode] = useState(false); // 다크모드 여부
-  const pathname = usePathname() || ""; // 현재 경로 감지
-  const { data: session, status } = useSession(); // NextAuth 세션 정보
+  // 다크모드 상태 관리
+  const [darkMode, setDarkMode] = useState(false);
+  
+  // 현재 경로와 세션 정보
+  const pathname = usePathname() || "";
+  const { data: session, status } = useSession();
+  
+  // 사용자 정보 (MongoDB에서 가져온 데이터)
+  const { user, loading } = useUser();
 
-  // 컴포넌트가 처음 렌더링될 때 다크모드 설정을 localStorage에서 불러옵니다
+  /**
+   * 컴포넌트가 처음 렌더링될 때 다크모드 설정을 localStorage에서 불러옵니다
+   */
   useEffect(() => {
     const savedDarkMode = localStorage.getItem("darkMode");
     if (savedDarkMode) {
@@ -20,7 +34,9 @@ export default function Header() {
     }
   }, []);
 
-  // 다크모드가 변경될 때마다 localStorage에 저장하고 body 클래스를 업데이트합니다
+  /**
+   * 다크모드가 변경될 때마다 localStorage에 저장하고 body 클래스를 업데이트합니다
+   */
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
     if (darkMode) {
@@ -30,12 +46,16 @@ export default function Header() {
     }
   }, [darkMode]);
 
-  // 다크모드 토글 함수
+  /**
+   * 다크모드 토글 함수
+   */
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
 
-  // 로그아웃 처리 함수
+  /**
+   * 로그아웃 처리 함수
+   */
   const handleLogout = async () => {
     if (confirm('로그아웃 하시겠습니까?')) {
       await signOut({ callbackUrl: '/' });
@@ -52,6 +72,14 @@ export default function Header() {
         dark: "/favicons/kodle/favicon-192x192-white.png"
       }
     },
+    check: {
+      text: "Gemo",
+      link: "/",
+      logo: {
+        light: "/favicons/home/favicon-192x192.png",
+        dark: "/favicons/home/favicon-192x192-white.png"
+      }
+    },
     default: {
       text: "Gemo",
       link: "/",
@@ -62,10 +90,15 @@ export default function Header() {
     }
   };
 
-  // 현재 페이지 설정 가져오기 (경로 패턴 매칭)
+  /**
+   * 현재 페이지 설정 가져오기 (경로 패턴 매칭)
+   */
   const getCurrentConfig = () => {
     if (pathname.startsWith("/kodle")) {
       return pageConfig.kodle;
+    }
+    if (pathname.startsWith("/check")) {
+      return pageConfig.check;
     }
     return pageConfig.default;
   };
@@ -86,12 +119,34 @@ export default function Header() {
           <h4>{currentConfig.text}</h4>
         </Link>
 
+        {/* 네비게이션 메뉴 */}
+        {status === "authenticated" && (
+          <nav className="header_nav">
+            <Link 
+              href="/check" 
+              style={{
+                color: pathname === '/check' ? '#0070f3' : '#666',
+                textDecoration: 'none',
+                fontWeight: pathname === '/check' ? '600' : '400',
+                fontSize: '14px',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                backgroundColor: pathname === '/check' ? '#f0f8ff' : 'transparent',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              출석체크
+            </Link>
+          </nav>
+        )}
+
         <div className="header_controls">
-          {/* 사용자 정보 표시 */}
+          {/* 로딩 상태 표시 */}
           {status === "loading" && (
             <span style={{ color: '#666' }}>로딩 중...</span>
           )}
           
+          {/* 로그인된 사용자 정보 및 레벨바 */}
           {status === "authenticated" && session?.user && (
             <div style={{ 
               display: 'flex', 
@@ -99,6 +154,27 @@ export default function Header() {
               gap: '15px',
               marginRight: '15px'
             }}>
+              {/* 레벨바 표시 */}
+              {user && !loading && (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px' 
+                }}>
+                  <LevelBar size="small" />
+                </div>
+              )}
+              
+              {/* 레벨바 로딩 중 */}
+              {loading && (
+                <span style={{ 
+                  color: '#666',
+                  fontSize: '12px'
+                }}>
+                  레벨 로딩 중...
+                </span>
+              )}
+              
               {/* 사용자 이메일 표시 */}
               <span style={{ 
                 color: '#333',
@@ -153,7 +229,6 @@ export default function Header() {
             onClick={toggleDarkMode}
             className="icon_button"
             title={darkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}>
-            {/* {darkMode ? <Sun size={20} /> : <Moon size={20} />} */}
             {darkMode ? "🌞" : "🌙"}
           </button>
         </div>

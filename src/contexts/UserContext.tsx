@@ -2,8 +2,12 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 
-// 사용자 정보를 담는 인터페이스
+/**
+ * 사용자 정보를 담는 인터페이스
+ * MongoDB의 UserProfile과 동일한 구조를 사용합니다.
+ */
 interface User {
   id: string // 사용자 고유 ID
   name: string // 사용자 이름
@@ -11,183 +15,267 @@ interface User {
   level: number // 현재 레벨
   currentXp: number // 현재 레벨에서의 경험치
   totalXp: number // 총 누적 경험치
-  lastAttendance: string | null // 마지막 출석 날짜
+  lastAttendance: string | null // 마지막 출석 날짜 (YYYY-MM-DD 형식)
   consecutiveAttendance: number // 연속 출석 일수
   gameWins: number // 게임 승리 횟수
   consecutiveWins: number // 연속 승리 횟수
 }
 
-// UserContext에서 제공하는 함수들의 타입 정의
+/**
+ * UserContext에서 제공하는 함수들의 타입 정의
+ */
 interface UserContextType {
   user: User | null // 현재 로그인한 사용자 정보
-  setUser: (user: User | null) => void // 사용자 정보 설정
-  addXp: (amount: number, reason: string) => void // 경험치 추가
-  checkAttendance: () => void // 출석체크
-  addGameWin: () => void // 게임 승리 처리
-  resetWinStreak: () => void // 연승 초기화
-  getRequiredXpForLevel: (level: number) => number // 특정 레벨까지 필요한 총 XP
+  loading: boolean // 사용자 데이터 로딩 상태
+  refreshUser: () => Promise<void> // 사용자 데이터 새로고침
+  addXp: (amount: number, reason: string) => Promise<void> // 경험치 추가
+  checkAttendance: () => Promise<void> // 출석체크
+  addGameWin: () => Promise<void> // 게임 승리 처리
+  resetWinStreak: () => Promise<void> // 연승 초기화
   getRequiredXpForNextLevel: () => number // 다음 레벨까지 필요한 XP
 }
 
 // React Context 생성
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
-// 레벨별 필요 XP를 계산하는 함수
-// 레벨이 높아질수록 더 많은 XP가 필요합니다
-const getRequiredXpForLevel = (level: number): number => {
-  if (level <= 1) return 0
-  if (level <= 10) return (level - 1) * 100 // 1-10레벨: 100xp씩
-  if (level <= 50) return 900 + (level - 10) * 200 // 11-50레벨: 200xp씩
-  if (level <= 100) return 8900 + (level - 50) * 500 // 51-100레벨: 500xp씩
-  if (level <= 200) return 33900 + (level - 100) * 1000 // 101-200레벨: 1000xp씩
-  if (level <= 300) return 133900 + (level - 200) * 2000 // 201-300레벨: 2000xp씩
-  if (level <= 400) return 333900 + (level - 300) * 5000 // 301-400레벨: 5000xp씩
-  if (level <= 500) return 833900 + (level - 400) * 10000 // 401-500레벨: 10000xp씩
-  return 1833900 // 500레벨 이후
+/**
+ * 다음 레벨까지 필요한 경험치를 계산하는 함수
+ * UserService와 동일한 공식을 사용합니다.
+ * @param level - 현재 레벨
+ * @returns 다음 레벨까지 필요한 경험치
+ */
+const getRequiredXpForNextLevel = (level: number): number => {
+  return (level + 1) * 100 + level * 50;
 }
 
-// UserProvider 컴포넌트 - 전체 앱에 사용자 정보를 제공합니다
+/**
+ * UserProvider 컴포넌트
+ * 전체 앱에 사용자 정보를 제공하고 MongoDB와 연동하여 데이터를 관리합니다.
+ */
 export function UserProvider({ children }: { children: React.ReactNode }) {
   // 현재 사용자 상태를 관리합니다
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  // NextAuth 세션 정보를 가져옵니다
+  const { data: session, status } = useSession()
 
-  // 컴포넌트가 처음 렌더링될 때 localStorage에서 사용자 데이터를 불러옵니다
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user")
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser))
-      } catch (error) {
-        console.error("사용자 데이터 로딩 실패:", error)
-        // 잘못된 데이터가 있으면 제거합니다
-        localStorage.removeItem("user")
-      }
-    }
-  }, [])
-
-  // 사용자 데이터가 변경될 때마다 localStorage에 저장합니다
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user))
-    }
-  }, [user])
-
-  // 경험치를 추가하고 레벨업을 처리하는 함수
-  const addXp = (amount: number, reason: string) => {
-    if (!user) return
-
-    const newTotalXp = user.totalXp + amount
-    let newLevel = user.level
-    let newCurrentXp = user.currentXp + amount
-
-    // 레벨업 체크 - 현재 XP가 다음 레벨 요구 XP를 넘으면 레벨업
-    while (newLevel < 500 && newCurrentXp >= getRequiredXpForLevel(newLevel + 1) - getRequiredXpForLevel(newLevel)) {
-      newCurrentXp -= getRequiredXpForLevel(newLevel + 1) - getRequiredXpForLevel(newLevel)
-      newLevel++
-    }
-
-    // 사용자 정보 업데이트
-    setUser({
-      ...user,
-      level: newLevel,
-      currentXp: newCurrentXp,
-      totalXp: newTotalXp,
-    })
-
-    // 콘솔에 XP 획득 로그 출력
-    console.log(`${reason}: +${amount}xp 획득!`)
-
-    // 레벨업했다면 축하 메시지 출력
-    if (newLevel > user.level) {
-      console.log(`🎉 레벨업! ${user.level} → ${newLevel}`)
-    }
-  }
-
-  // 출석체크를 처리하는 함수
-  const checkAttendance = () => {
-    if (!user) return
-
-    const today = new Date().toDateString()
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString()
-
-    // 이미 오늘 출석했는지 확인
-    if (user.lastAttendance === today) {
-      alert("이미 오늘 출석체크를 완료했습니다!")
+  /**
+   * MongoDB에서 사용자 프로필을 조회하는 함수
+   */
+  const fetchUserProfile = async () => {
+    if (!session?.user) {
+      setUser(null)
+      setLoading(false)
       return
     }
 
-    const baseXp = 10 // 기본 출석 XP
-    let bonusXp = 0
-    let newConsecutiveAttendance = 1
+    try {
+      const response = await fetch('/api/user/profile')
+      const result = await response.json()
 
-    // 연속 출석 체크 - 어제 출석했다면 연속 출석 증가
-    if (user.lastAttendance === yesterday) {
-      newConsecutiveAttendance = user.consecutiveAttendance + 1
+      if (result.success && result.data) {
+        const profile = result.data
+        // MongoDB 프로필 데이터를 User 인터페이스 형태로 변환 (새로운 단일 구조)
+        setUser({
+          id: profile._id,
+          name: profile.name,
+          email: profile.email,
+          level: profile.level,
+          currentXp: profile.currentXp,
+          totalXp: profile.totalXp,
+          lastAttendance: profile.lastAttendance,
+          consecutiveAttendance: profile.consecutiveAttendance,
+          gameWins: profile.gameWins,
+          consecutiveWins: profile.consecutiveWins,
+        })
+      } else {
+        console.error('사용자 프로필 조회 실패:', result.error)
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('사용자 프로필 조회 중 오류:', error)
+      setUser(null)
+    } finally {
+      setLoading(false)
     }
-
-    // 연속 출석 보너스 계산
-    if (newConsecutiveAttendance >= 30) {
-      bonusXp = 1000 // 30일 연속 출석 보너스
-    } else if (newConsecutiveAttendance >= 7) {
-      bonusXp = 100 // 7일 연속 출석 보너스
-    } else if (newConsecutiveAttendance >= 2 && newConsecutiveAttendance <= 6) {
-      bonusXp = 20 // 2-6일 연속 출석 보너스
-    }
-
-    const totalXp = baseXp + bonusXp
-    addXp(totalXp, `출석체크 (${newConsecutiveAttendance}일 연속)`)
-
-    // 출석 정보 업데이트
-    setUser({
-      ...user,
-      lastAttendance: today,
-      consecutiveAttendance: newConsecutiveAttendance,
-    })
-
-    // 출석 완료 알림
-    alert(`출석체크 완료! +${totalXp}XP 획득 (${newConsecutiveAttendance}일 연속)`)
   }
 
-  // 게임 승리를 처리하는 함수
-  const addGameWin = () => {
+  /**
+   * 사용자 데이터 새로고침 함수
+   */
+  const refreshUser = async () => {
+    await fetchUserProfile()
+  }
+
+  /**
+   * 세션 상태가 변경될 때마다 사용자 프로필을 다시 조회합니다
+   */
+  useEffect(() => {
+    if (status === 'loading') return // 세션 로딩 중이면 대기
+
+    if (status === 'authenticated') {
+      fetchUserProfile()
+    } else {
+      setUser(null)
+      setLoading(false)
+    }
+  }, [session, status])
+
+  /**
+   * 경험치를 추가하는 함수
+   * API를 통해 MongoDB에 저장하고 UI를 업데이트합니다.
+   * @param amount - 추가할 경험치
+   * @param reason - 경험치 추가 이유
+   */
+  const addXp = async (amount: number, reason: string) => {
     if (!user) return
 
-    const newConsecutiveWins = user.consecutiveWins + 1
-    const newGameWins = user.gameWins + 1
+    try {
+      const response = await fetch('/api/user/xp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ amount, reason }),
+      })
 
-    let xpAmount = 50 // 기본 승리 XP
+      const result = await response.json()
 
-    // 연승 보너스 계산
-    if (newConsecutiveWins >= 10) {
-      xpAmount = 1000 // 10연승 이상 보너스
-    } else if (newConsecutiveWins >= 5) {
-      xpAmount = 300 // 5연승 이상 보너스
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setUser(prev => prev ? {
+          ...prev,
+          level: result.data.level,
+          currentXp: result.data.currentXp,
+          totalXp: result.data.totalXp,
+        } : null)
+
+        console.log(`✨ ${reason}: +${amount}XP 획득! 현재 레벨: ${result.data.level}`)
+      } else {
+        console.error('경험치 추가 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('경험치 추가 중 오류:', error)
     }
-
-    addXp(xpAmount, `게임 승리 (${newConsecutiveWins}연승)`)
-
-    // 게임 통계 업데이트
-    setUser({
-      ...user,
-      gameWins: newGameWins,
-      consecutiveWins: newConsecutiveWins,
-    })
   }
 
-  // 연승 기록을 초기화하는 함수 (게임 패배 시 호출)
-  const resetWinStreak = () => {
+  /**
+   * 출석체크를 처리하는 함수
+   * API를 통해 MongoDB에 저장하고 UI를 업데이트합니다.
+   */
+  const checkAttendance = async () => {
     if (!user) return
 
-    setUser({
-      ...user,
-      consecutiveWins: 0,
-    })
+    try {
+      const response = await fetch('/api/user/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setUser(prev => prev ? {
+          ...prev,
+          consecutiveAttendance: result.data.consecutiveAttendance,
+          level: result.data.level,
+          currentXp: result.data.currentXp,
+          totalXp: result.data.totalXp,
+        } : null)
+
+        alert(result.message)
+        console.log(`📅 출석체크 완료! 연속 ${result.data.consecutiveAttendance}일`)
+      } else {
+        alert(result.error)
+        console.error('출석체크 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('출석체크 중 오류:', error)
+      alert('출석체크 중 오류가 발생했습니다.')
+    }
   }
 
-  // 다음 레벨까지 필요한 XP를 계산하는 함수
-  const getRequiredXpForNextLevel = () => {
+  /**
+   * 게임 승리를 처리하는 함수
+   * API를 통해 MongoDB에 저장하고 UI를 업데이트합니다.
+   */
+  const addGameWin = async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/user/game-win', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setUser(prev => prev ? {
+          ...prev,
+          gameWins: result.data.gameWins,
+          consecutiveWins: result.data.consecutiveWins,
+          level: result.data.level,
+          currentXp: result.data.currentXp,
+          totalXp: result.data.totalXp,
+        } : null)
+
+        console.log(`🏆 게임 승리! 총 ${result.data.gameWins}승, 연승 ${result.data.consecutiveWins}`)
+      } else {
+        console.error('게임 승리 처리 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('게임 승리 처리 중 오류:', error)
+    }
+  }
+
+  /**
+   * 연승 기록을 초기화하는 함수 (게임 패배 시 호출)
+   * API를 통해 MongoDB에 저장하고 UI를 업데이트합니다.
+   */
+  const resetWinStreak = async () => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/user/reset-win-streak', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setUser(prev => prev ? {
+          ...prev,
+          consecutiveWins: 0,
+        } : null)
+
+        console.log('🔄 연승이 초기화되었습니다.')
+      } else {
+        console.error('연승 초기화 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('연승 초기화 중 오류:', error)
+    }
+  }
+
+  /**
+   * 다음 레벨까지 필요한 XP를 계산하는 함수
+   * @returns 다음 레벨까지 필요한 경험치
+   */
+  const getRequiredXpForNextLevelValue = () => {
     if (!user || user.level >= 500) return 0
-    return getRequiredXpForLevel(user.level + 1) - getRequiredXpForLevel(user.level)
+    return getRequiredXpForNextLevel(user.level)
   }
 
   // Context Provider로 값들을 제공합니다
@@ -195,13 +283,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     <UserContext.Provider
       value={{
         user,
-        setUser,
+        loading,
+        refreshUser,
         addXp,
         checkAttendance,
         addGameWin,
         resetWinStreak,
-        getRequiredXpForLevel,
-        getRequiredXpForNextLevel,
+        getRequiredXpForNextLevel: getRequiredXpForNextLevelValue,
       }}
     >
       {children}
@@ -209,7 +297,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   )
 }
 
-// UserContext를 사용하기 위한 커스텀 훅
+/**
+ * UserContext를 사용하기 위한 커스텀 훅
+ * 컴포넌트에서 사용자 정보와 관련 함수들에 접근할 수 있습니다.
+ */
 export const useUser = () => {
   const context = useContext(UserContext)
   if (context === undefined) {
