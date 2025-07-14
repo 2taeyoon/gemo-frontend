@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from '@/lib/mongodb';
-import { UserService } from '@/lib/user-service';
+
 
 // NextAuth 설정 (route.ts와 동일)
 const authOptions = {
