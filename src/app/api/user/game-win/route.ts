@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import { UserService } from '@/lib/user-service';
+
 
 // NextAuth 설정 (route.ts와 동일)
 const authOptions = {
