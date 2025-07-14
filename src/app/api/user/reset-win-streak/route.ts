@@ -54,11 +54,21 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
+    const client = await clientPromise;
+    const db = client.db('gemo');
+    const usersCollection = db.collection('users');
+
     // 연승 초기화
-    await UserService.resetWinStreak(userId);
+    await usersCollection.updateOne(
+      { _id: userId },
+      { $set: { 'gameData.consecutiveWins': 0 } }
+    );
 
     // 업데이트된 사용자 프로필 조회
-    const updatedProfile = await UserService.getUserProfile(userId);
+    const updatedProfile = await usersCollection.findOne(
+      { _id: userId },
+      { projection: { 'gameData.gameWins': 1, 'gameData.consecutiveWins': 1 } }
+    );
 
     return NextResponse.json({
       success: true,
