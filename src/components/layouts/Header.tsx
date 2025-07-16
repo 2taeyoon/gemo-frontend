@@ -14,31 +14,20 @@ import LevelBar from "@/components/LevelBar";
  * 로고, 네비게이션, 사용자 정보, 레벨바를 표시합니다.
  */
 export default function Header() {
-  // 다크모드 상태 관리
-  const [darkMode, setDarkMode] = useState(false);
-  
   // 현재 경로와 세션 정보
   const pathname = usePathname() || "";
   const { data: session, status } = useSession();
   
   // 사용자 정보 (MongoDB에서 가져온 데이터)
-  const { user, loading } = useUser();
+  const { user, loading, updateThema } = useUser();
+
+  // 다크모드 상태는 user.thema 값을 기반으로 계산
+  const darkMode = user?.thema === 'dark';
 
   /**
-   * 컴포넌트가 처음 렌더링될 때 다크모드 설정을 localStorage에서 불러옵니다
+   * user.thema가 변경될 때마다 body 클래스를 업데이트합니다
    */
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("darkMode");
-    if (savedDarkMode) {
-      setDarkMode(JSON.parse(savedDarkMode));
-    }
-  }, []);
-
-  /**
-   * 다크모드가 변경될 때마다 localStorage에 저장하고 body 클래스를 업데이트합니다
-   */
-  useEffect(() => {
-    localStorage.setItem("darkMode", JSON.stringify(darkMode));
     if (darkMode) {
       document.body.classList.add("dark");
     } else {
@@ -50,7 +39,10 @@ export default function Header() {
    * 다크모드 토글 함수
    */
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    if (user) {
+      const newThema = user.thema === 'light' ? 'dark' : 'light';
+      updateThema(newThema);
+    }
   };
 
   /**
@@ -161,7 +153,7 @@ export default function Header() {
                   alignItems: 'center', 
                   gap: '10px' 
                 }}>
-                  <LevelBar size="small" />
+                  <LevelBar size="small" showXpText={true} />
                 </div>
               )}
               
@@ -207,7 +199,7 @@ export default function Header() {
           {/* 로그인되지 않은 경우 로그인 버튼 표시 */}
           {status === "unauthenticated" && (
             <Link 
-              href="/login" 
+              href="/auth" 
               style={{
                 padding: '8px 16px',
                 backgroundColor: '#0070f3',
