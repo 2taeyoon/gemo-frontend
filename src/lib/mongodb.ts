@@ -15,5 +15,5 @@ if (!global._mongoClientPromise) {
   clientPromise = global._mongoClientPromise;
 }
 
-// NextAuth MongoDBAdapter에서 사용할 수 있도록 Promise<MongoClient>를 직접 export
+// API 라우트에서 직접 MongoDB와 상호작용할 수 있도록 Promise<MongoClient>를 export
 export default clientPromise; 

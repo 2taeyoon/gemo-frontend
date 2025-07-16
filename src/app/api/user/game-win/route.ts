@@ -56,10 +56,15 @@ export async function POST(request: NextRequest) {
     const db = client.db('gemo');
     const usersCollection = db.collection('users');
 
-    // 게임 승리 처리
+    // 게임 승리 처리 (gameData 구조)
     await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
-      { $inc: { 'gameData.gameWins': 1, 'gameData.consecutiveWins': 1 } }
+      { 
+        $inc: { 
+          'gameData.gameWins': 1, 
+          'gameData.consecutiveWins': 1 
+        } 
+      }
     );
 
     // 업데이트된 사용자 프로필 조회
@@ -72,11 +77,11 @@ export async function POST(request: NextRequest) {
       success: true,
       message: '게임 승리가 기록되었습니다!',
       data: {
-        gameWins: updatedProfile?.gameData.gameWins,
-        consecutiveWins: updatedProfile?.gameData.consecutiveWins,
-        level: updatedProfile?.gameData.level,
-        currentXp: updatedProfile?.gameData.currentXp,
-        totalXp: updatedProfile?.gameData.totalXp,
+        gameWins: updatedProfile?.gameData?.gameWins || 0,
+        consecutiveWins: updatedProfile?.gameData?.consecutiveWins || 0,
+        level: updatedProfile?.gameData?.level || 1,
+        currentXp: updatedProfile?.gameData?.currentXp || 0,
+        totalXp: updatedProfile?.gameData?.totalXp || 0,
       }
     });
 

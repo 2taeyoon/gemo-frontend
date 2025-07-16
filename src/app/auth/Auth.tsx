@@ -3,7 +3,7 @@
 import { signIn, getProviders } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import "../../styles/login.css";
+import "@/styles/auth/auth.css";
 
 /**
  * 로그인 페이지 메인 컴포넌트

@@ -11,53 +11,6 @@
   /* transition: background-color 0.3s ease, color 0.3s ease; 다크모드 전환 애니메이션 */
 }
 
-/* 헤더 영역 - 제목과 컨트롤 버튼들이 있는 상단 영역 */
-/* .header {
-  width: 100%;
-  max-width: 48rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-} */
-
-/* 게임 제목 */
-/* .title {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--foreground);
-} */
-
-/* 헤더 컨트롤 영역 - 버튼들을 감싸는 컨테이너 */
-/* .headerControls {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-} */
-
-/* 사용자 인사말 */
-/* .userGreeting {
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
-} */
-
-/* 아이콘 버튼 스타일 */
-/* .iconButton {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  background-color: var(--muted);
-  color: var(--muted-foreground);
-  transition: background-color 0.2s ease, color 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.iconButton:hover {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
-} */
-
 /* 일반 아이콘 스타일 */
 .icon {
   color: var(--muted-foreground);

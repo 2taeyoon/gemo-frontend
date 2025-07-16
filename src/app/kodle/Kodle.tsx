@@ -3,12 +3,11 @@
 import { useState, useEffect } from "react"
 import { useUser } from "@/contexts/UserContext"
 import { decomposeKorean, checkGuess } from "@/utils/korean"
-// import LevelBar from "@/components/LevelBar"
-import "@/styles/gamePage.css"
+import "@/styles/kodle/kodle.css"
 
 // 한글 단어 데이터 타입 정의
 interface WordData {
-  easy: { word: string }[]
+  easy: { word: string, definition: string }[]
 }
 
 // 영어 키보드를 한글 자모로 매핑하는 객체
@@ -108,7 +107,7 @@ export default function KodlePage() {
   const initializeGame = async () => {
     try {
       // 한글 단어 목록을 불러옵니다
-      const response = await fetch("/korean-words.json");
+      const response = await fetch("/2word_easy.json");
       const data: WordData = await response.json();
 
       // 랜덤하게 단어를 선택합니다
@@ -287,35 +286,6 @@ export default function KodlePage() {
 
   return (
     <div className="container">
-      {/* 헤더 영역 */}
-      {/* <header className={styles.header}>
-        <h1 className={styles.title}>Kodle - 한국어 워들 게임</h1>
-        <div className={styles.headerControls}>
-          사용자 정보 표시
-          {user && (
-            <>
-              <span className={styles.userGreeting}>
-                {user.name}님 반갑습니다!
-              </span>
-              <LevelBar size="small" />
-              <Link href="/attendance" className={styles.iconButton} title="출석체크">
-							<Calendar size={20} />
-						</Link>
-            </>
-          )}
-
-          기타 버튼들
-          <Link href="/login" className={styles.iconButton} title="로그인">
-					<User size={20} />
-				</Link>
-				<Settings size={24} className={styles.icon} />
-				<HelpCircle size={24} className={styles.icon} />
-				<BarChart3 size={24} className={styles.icon} />
-        </div>
-      </header> */}
-
-      {/* 메시지 표시 영역 */}
-      {/* {message && <div className={styles.message}>{message}</div>} */}
 			<div className="loading">로딩 중...</div>
       {/* 게임 그리드 */}
       <div

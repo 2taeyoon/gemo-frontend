@@ -3,6 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { getRequiredXpForLevel } from "@/utils/levelCalculation"
 
 /**
  * 사용자 정보를 담는 인터페이스
@@ -12,6 +13,8 @@ interface User {
   id: string // 사용자 고유 ID
   name: string // 사용자 이름
   email: string // 이메일 주소
+  thema: 'light' | 'dark' // 다크모드 설정
+  // gameData 객체의 정보들
   level: number // 현재 레벨
   currentXp: number // 현재 레벨에서의 경험치
   totalXp: number // 총 누적 경험치
@@ -33,20 +36,16 @@ interface UserContextType {
   addGameWin: () => Promise<void> // 게임 승리 처리
   resetWinStreak: () => Promise<void> // 연승 초기화
   getRequiredXpForNextLevel: () => number // 다음 레벨까지 필요한 XP
+  updateThema: (thema: 'light' | 'dark') => Promise<void> // 테마 업데이트
+  // 레벨업 관련
+  levelUpInfo: { isLevelUp: boolean; newLevel: number } | null // 레벨업 정보
+  clearLevelUp: () => void // 레벨업 상태 초기화
 }
 
 // React Context 생성
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
-/**
- * 다음 레벨까지 필요한 경험치를 계산하는 함수
- * UserService와 동일한 공식을 사용합니다.
- * @param level - 현재 레벨
- * @returns 다음 레벨까지 필요한 경험치
- */
-const getRequiredXpForNextLevel = (level: number): number => {
-  return (level + 1) * 100 + level * 50;
-}
+
 
 /**
  * UserProvider 컴포넌트
@@ -57,8 +56,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   
+  // 레벨업 상태를 관리합니다
+  const [levelUpInfo, setLevelUpInfo] = useState<{ isLevelUp: boolean; newLevel: number } | null>(null)
+  
   // NextAuth 세션 정보를 가져옵니다
   const { data: session, status } = useSession()
+
+  /**
+   * 레벨업 상태를 초기화하는 함수
+   */
+  const clearLevelUp = () => {
+    setLevelUpInfo(null)
+  }
 
   /**
    * MongoDB에서 사용자 프로필을 조회하는 함수
@@ -76,18 +85,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       if (result.success && result.data) {
         const profile = result.data
-        // MongoDB 프로필 데이터를 User 인터페이스 형태로 변환 (새로운 단일 구조)
+        // MongoDB 프로필 데이터를 User 인터페이스 형태로 변환 (gameData 구조 반영)
         setUser({
           id: profile._id,
           name: profile.name,
           email: profile.email,
-          level: profile.level,
-          currentXp: profile.currentXp,
-          totalXp: profile.totalXp,
-          lastAttendance: profile.lastAttendance,
-          consecutiveAttendance: profile.consecutiveAttendance,
-          gameWins: profile.gameWins,
-          consecutiveWins: profile.consecutiveWins,
+          thema: profile.thema || 'light', // 기본값은 light
+          level: profile.gameData?.level || 1,
+          currentXp: profile.gameData?.currentXp || 0,
+          totalXp: profile.gameData?.totalXp || 0,
+          lastAttendance: profile.gameData?.lastAttendance || null,
+          consecutiveAttendance: profile.gameData?.consecutiveAttendance || 0,
+          gameWins: profile.gameData?.gameWins || 0,
+          consecutiveWins: profile.gameData?.consecutiveWins || 0,
         })
       } else {
         console.error('사용자 프로필 조회 실패:', result.error)
@@ -152,6 +162,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         } : null)
 
         console.log(`✨ ${reason}: +${amount}XP 획득! 현재 레벨: ${result.data.level}`)
+
+        // 레벨업 체크 및 상태 업데이트
+        if (result.data.leveledUp) {
+          setLevelUpInfo({ isLevelUp: true, newLevel: result.data.level })
+        }
       } else {
         console.error('경험치 추가 실패:', result.error)
       }
@@ -189,6 +204,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         alert(result.message)
         console.log(`📅 출석체크 완료! 연속 ${result.data.consecutiveAttendance}일`)
+
+        // 레벨업 체크 및 상태 업데이트
+        if (result.data.leveledUp) {
+          setLevelUpInfo({ isLevelUp: true, newLevel: result.data.level })
+        }
       } else {
         alert(result.error)
         console.error('출석체크 실패:', result.error)
@@ -228,6 +248,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         } : null)
 
         console.log(`🏆 게임 승리! 총 ${result.data.gameWins}승, 연승 ${result.data.consecutiveWins}`)
+
+        // 레벨업 체크 및 상태 업데이트
+        if (result.data.leveledUp) {
+          setLevelUpInfo({ isLevelUp: true, newLevel: result.data.level })
+        }
       } else {
         console.error('게임 승리 처리 실패:', result.error)
       }
@@ -270,12 +295,47 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   }
 
   /**
-   * 다음 레벨까지 필요한 XP를 계산하는 함수
-   * @returns 다음 레벨까지 필요한 경험치
+   * 테마 설정을 업데이트하는 함수
+   * API를 통해 MongoDB에 저장하고 UI를 업데이트합니다.
+   * @param thema - 새로운 테마 설정 ('light' 또는 'dark')
+   */
+  const updateThema = async (thema: 'light' | 'dark') => {
+    if (!user) return
+
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ thema }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setUser(prev => prev ? {
+          ...prev,
+          thema: thema,
+        } : null)
+
+        console.log(`🎨 테마 변경: ${thema}`)
+      } else {
+        console.error('테마 업데이트 실패:', result.error)
+      }
+    } catch (error) {
+      console.error('테마 업데이트 중 오류:', error)
+    }
+  }
+
+  /**
+   * 현재 레벨에서 레벨업까지 필요한 XP를 계산하는 함수
+   * @returns 현재 레벨에서 레벨업에 필요한 경험치
    */
   const getRequiredXpForNextLevelValue = () => {
     if (!user || user.level >= 500) return 0
-    return getRequiredXpForNextLevel(user.level)
+    return getRequiredXpForLevel(user.level)
   }
 
   // Context Provider로 값들을 제공합니다
@@ -290,6 +350,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         addGameWin,
         resetWinStreak,
         getRequiredXpForNextLevel: getRequiredXpForNextLevelValue,
+        updateThema,
+        // 레벨업 관련
+        levelUpInfo,
+        clearLevelUp,
       }}
     >
       {children}
