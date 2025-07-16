@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { getRequiredXpForLevel, calculateLevelFromTotalXp } from '@/utils/levelCalculation';
 
 // NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
@@ -32,28 +33,7 @@ const authOptions = {
   },
 };
 
-/**
- * 레벨별 필요 경험치 계산
- */
-function getRequiredXpForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(1.2, level - 1));
-}
 
-/**
- * 총 경험치로부터 레벨과 현재 레벨 경험치 계산
- */
-function calculateLevelFromTotalXp(totalXp: number): { level: number; currentXp: number } {
-  let level = 1;
-  let accumulatedXp = 0;
-  
-  while (accumulatedXp + getRequiredXpForLevel(level) <= totalXp) {
-    accumulatedXp += getRequiredXpForLevel(level);
-    level++;
-  }
-  
-  const currentXp = totalXp - accumulatedXp;
-  return { level, currentXp };
-}
 
 /**
  * 경험치 증가 API
@@ -91,20 +71,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 새로운 총 경험치 계산
-    const newTotalXp = user.totalXp + amount;
+    const newTotalXp = (user.gameData?.totalXp || 0) + amount;
     const { level, currentXp } = calculateLevelFromTotalXp(newTotalXp);
 
     // 레벨업 체크
-    const leveledUp = level > user.level;
+    const leveledUp = level > (user.gameData?.level || 1);
 
-    // 사용자 정보 업데이트
+    // 사용자 정보 업데이트 (gameData 구조)
     await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
       {
         $set: {
-          totalXp: newTotalXp,
-          currentXp: currentXp,
-          level: level,
+          'gameData.totalXp': newTotalXp,
+          'gameData.currentXp': currentXp,
+          'gameData.level': level,
           updatedAt: new Date(),
         }
       }
@@ -113,7 +93,7 @@ export async function POST(request: NextRequest) {
     console.log(`✅ 경험치 추가 완료: ${amount}XP → 레벨 ${level} (${currentXp}/${getRequiredXpForLevel(level)})`);
 
     if (leveledUp) {
-      console.log(`🎉 레벨업! ${user.level} → ${level}`);
+      console.log(`🎉 레벨업! ${user.gameData?.level || 1} → ${level}`);
     }
 
     return NextResponse.json({
