@@ -1,7 +1,7 @@
 /* 레벨바 컴포넌트의 스타일을 정의하는 CSS 모듈 */
 
 /* 레벨바 컨테이너 */
-.container {
+.level_bar_container {
   position: relative;
 }
 
