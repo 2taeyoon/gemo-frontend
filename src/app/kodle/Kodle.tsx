@@ -25,7 +25,16 @@ const keyboardMapping: { [key: string]: string } = {
 
 export default function KodlePage() {
   // 사용자 컨텍스트에서 사용자 정보와 관련 함수들을 가져옵니다
-  const { user, addGameWin, resetWinStreak } = useUser();
+  // 새로운 코들 게임 전용 함수들을 사용합니다
+  const { user, addKodleGameWin, addKodleGameDefeat } = useUser();
+  
+  // 🔍 Kodle 컴포넌트에서 사용자 정보 디버깅
+  console.log('🔍 Kodle 컴포넌트 사용자 정보:', {
+    user: user,
+    hasUser: !!user,
+    userId: user?.id,
+    userName: user?.name,
+  });
 
   // 게임 상태 관리를 위한 state들
   const [targetWord, setTargetWord] = useState<string>(""); // 정답 단어
@@ -222,18 +231,18 @@ export default function KodlePage() {
       setGameOver(true);
       setMessage("축하합니다! 정답을 맞추셨습니다!");
 
-      // 로그인한 사용자에게 XP 추가
+      // 로그인한 사용자의 코들 게임 승리 처리 (경험치 지급 + 통계 업데이트)
       if (user) {
-        addGameWin();
+        addKodleGameWin(); // 새로운 코들 게임 승리 함수 사용
       }
     } else if (currentRow === 5) {
       // 6번째 시도까지 실패한 경우
       setGameOver(true);
       setMessage(`게임 종료! 정답은 "${targetWord}"였습니다.`);
 
-      // 게임 실패 시 연승 초기화
+      // 로그인한 사용자의 코들 게임 패배 처리 (패배 통계 업데이트 + 연승 초기화)
       if (user) {
-        resetWinStreak();
+        addKodleGameDefeat(); // 새로운 코들 게임 패배 함수 사용
       }
     } else {
       // 다음 행으로 이동
@@ -283,10 +292,37 @@ export default function KodlePage() {
   if (!targetJamo.length) {
     return <div className="loading">로딩 중...</div>;
   }
+	console.log("session.user", user);
+
 
   return (
     <div className="container">
-			<div className="loading">로딩 중...</div>
+			{/* <div className="loading">로딩 중...</div> */}
+      {user ? (
+        <div>
+          <p>사용자 이름: {user.name}</p>
+          <p>사용자 ID: {user.id}</p>
+        </div>
+      ) : (
+        <div>로그인이 필요합니다.</div>
+      )}
+
+
+
+      {/* 테스트용 정답 표시 */}
+      <div style={{
+        backgroundColor: '#ff6b6b',
+        color: 'white',
+        padding: '10px',
+        borderRadius: '8px',
+        textAlign: 'center',
+        marginBottom: '20px',
+        fontSize: '18px',
+        fontWeight: 'bold'
+      }}>
+        🎯 테스트용 정답: {targetWord} ({targetJamo.join(" ")})
+      </div>
+      
       {/* 게임 그리드 */}
       <div
         className="game_grid"

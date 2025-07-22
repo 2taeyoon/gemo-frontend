@@ -128,7 +128,7 @@ export default function LevelBar({ size = "small", showXpText = false, animated 
 
   return (
     <>
-      <div className={`container ${sizeClass}`}>
+      <div className={`level_bar_container ${sizeClass}`}>
         {/* 레벨 표시 */}
         <div className="level_info">
           <span className="level">Lv.{currentLevel}</span>

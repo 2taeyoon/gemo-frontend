@@ -77,17 +77,21 @@ const handler = NextAuth({
             updatedAt: new Date(),
             // 게임 데이터를 gameData 객체로 구조화
             gameData: {
-              level: 1,
-              currentXp: 0,
-              totalXp: 0,
-              lastAttendance: null,
-              consecutiveAttendance: 0,
-              gameWins: 0,
-              consecutiveWins: 0,
-              totalScore: 0,
-              kodleTotalPlayed: 0,
-              achievements: [],
-              lastPlayed: null,
+              level: 1, // 사용자 레벨
+              currentXp: 0, // 현재 레벨에서의 경험치
+              totalXp: 0, // 총 누적 경험치
+              lastAttendance: null, // 마지막 출석 날짜
+              consecutiveAttendance: 0, // 연속 출석 일수
+              // 코들 게임 관련 통계
+              kodleGameWins: 0, // 코들 게임 승리 횟수 (기존 gameWins 대체)
+              kodleGameDefeat: 0, // 코들 게임 패배 횟수 (새로 추가)
+              kodleSuccessiveVictory: 0, // 코들 게임 연속 승리 횟수 (기존 consecutiveWins 대체)
+              kodleMaximumSuccessiveVictory: 0, // 코들 게임 최대 연속 승리 기록 (새로 추가)
+              // 기타 게임 데이터
+              totalScore: 0, // 총 점수
+              kodleTotalPlayed: 0, // 코들 게임 총 플레이 횟수
+              achievements: [], // 업적 목록
+              lastPlayed: null, // 마지막 플레이 날짜
             },
             // 사용자 설정
             thema: 'light' as const,

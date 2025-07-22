@@ -89,8 +89,25 @@ export async function POST(request: NextRequest) {
       : 1;
 
     // 경험치 계산 (기본 50XP + 연속출석 보너스)
+    // 새로운 보상 체계: 특정 연속 출석 일수에 따른 보너스
     const baseXp = 50;
-    const bonusXp = Math.min(newConsecutiveAttendance * 5, 100); // 최대 100XP 보너스
+    let bonusXp = 0;
+    
+    // 연속 출석 일수에 따른 보너스 XP 계산
+    if (newConsecutiveAttendance >= 30) {
+      bonusXp = 500; // 30일 연속: 500XP 보너스
+    } else if (newConsecutiveAttendance >= 21) {
+      bonusXp = 400; // 21일 연속: 400XP 보너스
+    } else if (newConsecutiveAttendance >= 14) {
+      bonusXp = 300; // 14일 연속: 300XP 보너스
+    } else if (newConsecutiveAttendance >= 7) {
+      bonusXp = 200; // 7일 연속: 200XP 보너스
+    } else if (newConsecutiveAttendance >= 3) {
+      bonusXp = 100; // 3일 연속: 100XP 보너스
+    } else {
+      bonusXp = 0; // 1~2일: 보너스 없음, 기본 50XP만
+    }
+    
     const totalXp = baseXp + bonusXp;
 
     console.log(`📅 출석체크: 연속 ${newConsecutiveAttendance}일, ${totalXp}XP (기본 ${baseXp} + 보너스 ${bonusXp})`);
@@ -181,13 +198,13 @@ export async function GET(request: NextRequest) {
     const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })
       .replace(/\. /g, '-').replace('.', '').replace(/\s/g, '');
 
-    const hasCheckedToday = user.lastAttendance === today;
+    const hasCheckedToday = user.gameData?.lastAttendance === today;
 
     return NextResponse.json({
       success: true,
       data: {
-        lastAttendance: user.lastAttendance,
-        consecutiveAttendance: user.consecutiveAttendance,
+        lastAttendance: user.gameData?.lastAttendance,
+        consecutiveAttendance: user.gameData?.consecutiveAttendance || 0,
         hasCheckedToday
       }
     });

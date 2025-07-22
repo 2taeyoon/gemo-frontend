@@ -33,13 +33,13 @@ const authOptions = {
 };
 
 /**
- * 연승 초기화 및 패배 처리 API
- * POST /api/user/reset-win-streak
- * 사용자의 연승 기록을 초기화하고 패배 횟수를 증가시킵니다.
+ * 코들 게임 패배 처리 API
+ * POST /api/user/kodle-game-defeat
  * 
  * 기능:
  * 1. kodleGameDefeat (총 패배 횟수) 증가
  * 2. kodleSuccessiveVictory (연속 승리) 0으로 초기화
+ * 3. 패배 시에는 경험치 지급하지 않음 (추후 위로 경험치 등 고려 가능)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -55,12 +55,21 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
+    // 🔍 디버깅 로그 추가
+    console.log('🔍 kodle-game-defeat API 디버깅:');
+    console.log('  - session.user:', session.user);
+    console.log('  - userId:', userId);
+    console.log('  - userId type:', typeof userId);
+    
     const client = await clientPromise;
     const db = client.db('gemo');
     const usersCollection = db.collection('users');
 
-    // 현재 사용자 정보 조회 (새로운 구조 적용을 위해)
+    // 현재 사용자 정보 조회
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    
+    // 🔍 사용자 조회 결과 로그
+    console.log('  - MongoDB 조회 결과:', user ? '✅ 사용자 발견' : '❌ 사용자 없음');
     
     if (!user) {
       return NextResponse.json(
@@ -69,51 +78,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 현재 게임 통계 가져오기
-    const currentKodleGameWins = user.gameData?.kodleGameWins || user.gameData?.gameWins || 0;
+    // 현재 게임 통계 가져오기 (새로운 구조 우선, 기존 구조 fallback)
     const currentKodleGameDefeat = user.gameData?.kodleGameDefeat || 0;
+    const currentKodleGameWins = user.gameData?.kodleGameWins || user.gameData?.gameWins || 0;
+    const currentKodleSuccessiveVictory = user.gameData?.kodleSuccessiveVictory || user.gameData?.consecutiveWins || 0;
+
+    // 새로운 값들 계산
     const newKodleGameDefeat = currentKodleGameDefeat + 1;
+    const newKodleSuccessiveVictory = 0; // 패배 시 연속 승리 초기화
 
-    console.log(`💔 코들 게임 패배 처리 (하위 호환성 API): ${user.email}`);
-    console.log(`  - 총 승리: ${currentKodleGameWins}회 (변화 없음)`);
-    console.log(`  - 총 패배: ${currentKodleGameDefeat} → ${newKodleGameDefeat}회`);
-    console.log(`  - 연속 승리: 초기화 (0으로 설정)`);
+    console.log(`💔 코들 게임 패배 처리: ${user.email}`);
+    console.log(`  - 총 패배: ${currentKodleGameDefeat} → ${newKodleGameDefeat}`);
+    console.log(`  - 연속 승리: ${currentKodleSuccessiveVictory} → ${newKodleSuccessiveVictory} (초기화)`);
 
-    // 패배 처리 및 연승 초기화 (새로운 구조 + 하위 호환성)
+    // 게임 통계 업데이트 (새로운 구조 + 하위 호환성)
     await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
       { 
-        $set: { 
+        $set: {
           // 새로운 코들 게임 구조
           'gameData.kodleGameDefeat': newKodleGameDefeat,
-          'gameData.kodleSuccessiveVictory': 0,
+          'gameData.kodleSuccessiveVictory': newKodleSuccessiveVictory,
           
           // 하위 호환성을 위한 기존 필드들
-          'gameData.consecutiveWins': 0,
+          'gameData.consecutiveWins': newKodleSuccessiveVictory,
           
           // 마지막 업데이트 시간
           updatedAt: new Date(),
-        } 
+        }
       }
     );
 
-          return NextResponse.json({
-        success: true,
-        message: '코들 게임 패배가 기록되었습니다.',
-        data: {
-          // 하위 호환성을 위한 기존 필드들
-          gameWins: currentKodleGameWins,
-          consecutiveWins: 0,
-          // 새로운 필드들
-          kodleGameWins: currentKodleGameWins,
-          kodleGameDefeat: newKodleGameDefeat,
-          kodleSuccessiveVictory: 0,
-          kodleMaximumSuccessiveVictory: user.gameData?.kodleMaximumSuccessiveVictory || 0,
-        }
-      });
+    // 응답 데이터 구성
+    const responseData = {
+      kodleGameDefeat: newKodleGameDefeat,
+      kodleGameWins: currentKodleGameWins, // 승리 횟수도 포함 (패배해도 승리 횟수는 변하지 않음)
+      kodleSuccessiveVictory: newKodleSuccessiveVictory,
+      kodleMaximumSuccessiveVictory: user.gameData?.kodleMaximumSuccessiveVictory || 0,
+      // 패배 시에는 경험치 변동 없음
+      level: user.gameData?.level || 1,
+      currentXp: user.gameData?.currentXp || 0,
+      totalXp: user.gameData?.totalXp || 0,
+    };
+
+    console.log(`✅ 코들 게임 패배 처리 완료: ${user.email}`);
+
+    return NextResponse.json({
+      success: true,
+      message: '코들 게임 패배가 기록되었습니다.',
+      data: responseData
+    });
 
   } catch (error) {
-    console.error('연승 초기화 오류:', error);
+    console.error('❌ 코들 게임 패배 처리 오류:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -123,7 +140,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * 사용자 정보 조회 API
- * GET /api/user/reset-win-streak
+ * GET /api/user/kodle-game-defeat
  */
 export async function GET(request: NextRequest) {
   try {
@@ -139,7 +156,7 @@ export async function GET(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
-    console.log('🔍 [GET reset-win-streak] 디버깅 정보:');
+    console.log('🔍 [GET kodle-game-defeat] 디버깅 정보:');
     console.log('  - session.user:', session.user);
     console.log('  - userId:', userId);
     console.log('  - userId type:', typeof userId);

@@ -4,7 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-// NextAuth 설정 (JWT 기반)
+// NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
   providers: [
     GoogleProvider({
@@ -19,14 +19,13 @@ const authOptions = {
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
+        token.userId = user.id;
       }
       return token;
     },
     async session({ session, token }: any) {
-      if (session.user && token.id) {
-        (session.user as any).id = token.id;
+      if (token?.userId && session.user) {
+        (session.user as any).id = token.userId as string;
       }
       return session;
     },
@@ -52,41 +51,156 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
+    // 🔍 기존 game-win API 디버깅 (비교용)
+    console.log('🔍 기존 game-win API 디버깅:');
+    console.log('  - session.user:', session.user);
+    console.log('  - userId:', userId);
+    console.log('  - userId type:', typeof userId);
+    
     const client = await clientPromise;
     const db = client.db('gemo');
     const usersCollection = db.collection('users');
 
-    // 게임 승리 처리 (gameData 구조)
+    // 현재 사용자 정보 조회 (새로운 구조 적용을 위해)
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    
+    // 🔍 기존 API 사용자 조회 결과 로그
+    console.log('  - MongoDB 조회 결과:', user ? '✅ 사용자 발견' : '❌ 사용자 없음');
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 현재 게임 통계 가져오기 (새로운 구조 우선, 기존 구조 fallback)
+    const currentKodleGameWins = user.gameData?.kodleGameWins || user.gameData?.gameWins || 0;
+    const currentKodleSuccessiveVictory = user.gameData?.kodleSuccessiveVictory || user.gameData?.consecutiveWins || 0;
+    const currentKodleMaximumSuccessiveVictory = user.gameData?.kodleMaximumSuccessiveVictory || 0;
+
+    // 새로운 값들 계산
+    const newKodleGameWins = currentKodleGameWins + 1;
+    const newKodleSuccessiveVictory = currentKodleSuccessiveVictory + 1;
+    const newKodleMaximumSuccessiveVictory = Math.max(newKodleSuccessiveVictory, currentKodleMaximumSuccessiveVictory);
+
+    console.log(`🏆 게임 승리 처리 (하위 호환성 API): ${user.email}`);
+    console.log(`  - 총 승리: ${currentKodleGameWins} → ${newKodleGameWins}`);
+    console.log(`  - 연속 승리: ${currentKodleSuccessiveVictory} → ${newKodleSuccessiveVictory}`);
+    console.log(`  - 최대 연속 승리: ${currentKodleMaximumSuccessiveVictory} → ${newKodleMaximumSuccessiveVictory}`);
+
+    // 게임 승리 처리 (새로운 구조 + 하위 호환성)
     await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
       { 
-        $inc: { 
-          'gameData.gameWins': 1, 
-          'gameData.consecutiveWins': 1 
-        } 
+        $set: {
+          // 새로운 코들 게임 구조
+          'gameData.kodleGameWins': newKodleGameWins,
+          'gameData.kodleSuccessiveVictory': newKodleSuccessiveVictory,
+          'gameData.kodleMaximumSuccessiveVictory': newKodleMaximumSuccessiveVictory,
+          
+          // 하위 호환성을 위한 기존 필드들
+          'gameData.gameWins': newKodleGameWins,
+          'gameData.consecutiveWins': newKodleSuccessiveVictory,
+          
+          // 마지막 업데이트 시간
+          updatedAt: new Date(),
+        }
       }
-    );
-
-    // 업데이트된 사용자 프로필 조회
-    const updatedProfile = await usersCollection.findOne(
-      { _id: new ObjectId(userId) },
-      { projection: { 'gameData': 1 } }
     );
 
     return NextResponse.json({
       success: true,
       message: '게임 승리가 기록되었습니다!',
       data: {
-        gameWins: updatedProfile?.gameData?.gameWins || 0,
-        consecutiveWins: updatedProfile?.gameData?.consecutiveWins || 0,
-        level: updatedProfile?.gameData?.level || 1,
-        currentXp: updatedProfile?.gameData?.currentXp || 0,
-        totalXp: updatedProfile?.gameData?.totalXp || 0,
+        // 하위 호환성을 위한 기존 필드들
+        gameWins: newKodleGameWins,
+        consecutiveWins: newKodleSuccessiveVictory,
+        // 새로운 필드들
+        kodleGameWins: newKodleGameWins,
+        kodleSuccessiveVictory: newKodleSuccessiveVictory,
+        kodleMaximumSuccessiveVictory: newKodleMaximumSuccessiveVictory,
+        // 기타 정보
+        level: user.gameData?.level || 1,
+        currentXp: user.gameData?.currentXp || 0,
+        totalXp: user.gameData?.totalXp || 0,
       }
     });
 
   } catch (error) {
     console.error('게임 승리 처리 오류:', error);
+    return NextResponse.json(
+      { error: '서버 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * 사용자 정보 조회 API
+ * GET /api/user/game-win
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // 세션 확인
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const userId = (session.user as any).id;
+    
+    console.log('🔍 [GET game-win] 디버깅 정보:');
+    console.log('  - session.user:', session.user);
+    console.log('  - userId:', userId);
+    console.log('  - userId type:', typeof userId);
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: '사용자 ID를 찾을 수 없습니다.' },
+        { status: 400 }
+      );
+    }
+    
+    const client = await clientPromise;
+    const db = client.db('gemo');
+    const usersCollection = db.collection('users');
+
+    console.log('  - MongoDB 연결 시도...');
+    
+    // ObjectId 유효성 검사
+    if (!ObjectId.isValid(userId)) {
+      console.log('  - ❌ 유효하지 않은 ObjectId:', userId);
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 현재 사용자 정보 조회
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    console.log('  - MongoDB 조회 결과:', user ? '✅ 사용자 발견' : '❌ 사용자 없음');
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ 사용자 정보 조회 성공:', user.email);
+
+    return NextResponse.json({
+      success: true,
+      data: user
+    });
+
+  } catch (error) {
+    console.error('❌ 사용자 정보 조회 오류:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
