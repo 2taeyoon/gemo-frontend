@@ -20,14 +20,13 @@ const authOptions = {
   callbacks: {
     async jwt({ token, user }: any) {
       if (user) {
-        token.id = user.id;  // ✅ 기존 API와 동일하게 수정
-        token.email = user.email;
+        token.userId = user.id;
       }
       return token;
     },
     async session({ session, token }: any) {
-      if (session.user && token.id) {
-        (session.user as any).id = token.id;
+      if (token?.userId && session.user) {
+        (session.user as any).id = token.userId as string;
       }
       return session;
     },
@@ -157,6 +156,78 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('❌ 코들 게임 승리 처리 오류:', error);
+    return NextResponse.json(
+      { error: '서버 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * 사용자 정보 조회 API
+ * GET /api/user/kodle-game-win
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // 세션 확인
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const userId = (session.user as any).id;
+    
+    console.log('🔍 [GET kodle-game-win] 디버깅 정보:');
+    console.log('  - session.user:', session.user);
+    console.log('  - userId:', userId);
+    console.log('  - userId type:', typeof userId);
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: '사용자 ID를 찾을 수 없습니다.' },
+        { status: 400 }
+      );
+    }
+    
+    const client = await clientPromise;
+    const db = client.db('gemo');
+    const usersCollection = db.collection('users');
+
+    console.log('  - MongoDB 연결 시도...');
+    
+    // ObjectId 유효성 검사
+    if (!ObjectId.isValid(userId)) {
+      console.log('  - ❌ 유효하지 않은 ObjectId:', userId);
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
+
+    // 현재 사용자 정보 조회
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    console.log('  - MongoDB 조회 결과:', user ? '✅ 사용자 발견' : '❌ 사용자 없음');
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    console.log('✅ 사용자 정보 조회 성공:', user.email);
+
+    return NextResponse.json({
+      success: true,
+      data: user
+    });
+
+  } catch (error) {
+    console.error('❌ 사용자 정보 조회 오류:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
