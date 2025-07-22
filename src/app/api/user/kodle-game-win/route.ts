@@ -1,0 +1,165 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { calculateLevelFromTotalXp } from '@/utils/levelCalculation';
+
+// NextAuth 설정 (JWT 기반)
+const authOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+  ],
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-development",
+  session: {
+    strategy: "jwt" as const,
+  },
+  callbacks: {
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.id = user.id;  // ✅ 기존 API와 동일하게 수정
+        token.email = user.email;
+      }
+      return token;
+    },
+    async session({ session, token }: any) {
+      if (session.user && token.id) {
+        (session.user as any).id = token.id;
+      }
+      return session;
+    },
+  },
+};
+
+/**
+ * 코들 게임 승리 처리 API
+ * POST /api/user/kodle-game-win
+ * 
+ * 기능:
+ * 1. kodleGameWins (총 승리 횟수) 증가
+ * 2. kodleSuccessiveVictory (연속 승리) 증가
+ * 3. kodleMaximumSuccessiveVictory (최대 연속 승리 기록) 업데이트
+ * 4. 게임 승리 시 경험치 지급 (100XP)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // 세션 확인
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const userId = (session.user as any).id;
+    
+    // 🔍 디버깅 로그 추가
+    console.log('🔍 kodle-game-win API 디버깅:');
+    console.log('  - session.user:', session.user);
+    console.log('  - userId:', userId);
+    console.log('  - userId type:', typeof userId);
+    
+    const client = await clientPromise;
+    const db = client.db('gemo');
+    const usersCollection = db.collection('users');
+
+    // 현재 사용자 정보 조회
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    
+    // 🔍 사용자 조회 결과 로그
+    console.log('  - MongoDB 조회 결과:', user ? '✅ 사용자 발견' : '❌ 사용자 없음');
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
+      );
+    }
+
+    // 현재 게임 통계 가져오기 (새로운 구조 우선, 기존 구조 fallback)
+    const currentKodleGameWins = user.gameData?.kodleGameWins || user.gameData?.gameWins || 0;
+    const currentKodleSuccessiveVictory = user.gameData?.kodleSuccessiveVictory || user.gameData?.consecutiveWins || 0;
+    const currentKodleMaximumSuccessiveVictory = user.gameData?.kodleMaximumSuccessiveVictory || 0;
+
+    // 새로운 값들 계산
+    const newKodleGameWins = currentKodleGameWins + 1;
+    const newKodleSuccessiveVictory = currentKodleSuccessiveVictory + 1;
+    
+    // 최대 연속 승리 기록 업데이트 (현재 연속 승리가 기존 최대 기록을 넘었을 때만)
+    const newKodleMaximumSuccessiveVictory = Math.max(newKodleSuccessiveVictory, currentKodleMaximumSuccessiveVictory);
+
+    // 승리 시 지급할 경험치 (100XP)
+    const victoryXp = 100;
+    const newTotalXp = (user.gameData?.totalXp || 0) + victoryXp;
+
+    // 새로운 총 경험치를 바탕으로 레벨과 현재 레벨 경험치 계산
+    const { level: newLevel, currentXp: newCurrentXp } = calculateLevelFromTotalXp(newTotalXp);
+    
+    // 레벨업 여부 확인
+    const previousLevel = user.gameData?.level || 1;
+    const leveledUp = newLevel > previousLevel;
+
+    console.log(`🏆 코들 게임 승리 처리: ${user.email}`);
+    console.log(`  - 총 승리: ${currentKodleGameWins} → ${newKodleGameWins}`);
+    console.log(`  - 연속 승리: ${currentKodleSuccessiveVictory} → ${newKodleSuccessiveVictory}`);
+    console.log(`  - 최대 연속 승리: ${currentKodleMaximumSuccessiveVictory} → ${newKodleMaximumSuccessiveVictory}`);
+    console.log(`  - 경험치: +${victoryXp}XP 획득`);
+
+    // 게임 통계 업데이트 (새로운 구조 + 하위 호환성)
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: {
+          // 새로운 코들 게임 구조
+          'gameData.kodleGameWins': newKodleGameWins,
+          'gameData.kodleSuccessiveVictory': newKodleSuccessiveVictory,
+          'gameData.kodleMaximumSuccessiveVictory': newKodleMaximumSuccessiveVictory,
+          
+          // 하위 호환성을 위한 기존 필드들
+          'gameData.gameWins': newKodleGameWins,
+          'gameData.consecutiveWins': newKodleSuccessiveVictory,
+          
+          // 경험치 및 레벨 업데이트
+          'gameData.totalXp': newTotalXp,
+          'gameData.currentXp': newCurrentXp,
+          'gameData.level': newLevel,
+          
+          // 마지막 업데이트 시간
+          updatedAt: new Date(),
+        }
+      }
+    );
+
+    // 응답 데이터 구성
+    const responseData = {
+      kodleGameWins: newKodleGameWins,
+      kodleSuccessiveVictory: newKodleSuccessiveVictory,
+      kodleMaximumSuccessiveVictory: newKodleMaximumSuccessiveVictory,
+      xpGained: victoryXp,
+      level: newLevel,
+      currentXp: newCurrentXp,
+      totalXp: newTotalXp,
+      leveledUp: leveledUp,
+    };
+
+    console.log(`✅ 코들 게임 승리 처리 완료: ${user.email}`);
+
+    return NextResponse.json({
+      success: true,
+      message: '코들 게임 승리가 기록되었습니다!',
+      data: responseData
+    });
+
+  } catch (error) {
+    console.error('❌ 코들 게임 승리 처리 오류:', error);
+    return NextResponse.json(
+      { error: '서버 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+} 
