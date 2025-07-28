@@ -139,8 +139,9 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * 사용자 정보 조회 API
+ * 코들 게임 패배 정보 조회 API
  * GET /api/user/kodle-game-defeat
+ * 코들 게임 패배와 관련된 통계 정보만 반환합니다.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -156,10 +157,8 @@ export async function GET(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
-    console.log('🔍 [GET kodle-game-defeat] 디버깅 정보:');
-    console.log('  - session.user:', session.user);
+    console.log('🔍 [GET kodle-game-defeat] 코들 게임 패배 정보 조회:');
     console.log('  - userId:', userId);
-    console.log('  - userId type:', typeof userId);
     
     if (!userId) {
       return NextResponse.json(
@@ -171,8 +170,6 @@ export async function GET(request: NextRequest) {
     const client = await clientPromise;
     const db = client.db('gemo');
     const usersCollection = db.collection('users');
-
-    console.log('  - MongoDB 연결 시도...');
     
     // ObjectId 유효성 검사
     if (!ObjectId.isValid(userId)) {
@@ -185,7 +182,6 @@ export async function GET(request: NextRequest) {
 
     // 현재 사용자 정보 조회
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
-    console.log('  - MongoDB 조회 결과:', user ? '✅ 사용자 발견' : '❌ 사용자 없음');
     
     if (!user) {
       return NextResponse.json(
@@ -194,15 +190,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('✅ 사용자 정보 조회 성공:', user.email);
+    console.log('✅ 코들 게임 패배 정보 조회 성공:', user.email);
 
+    // 코들 게임 패배 관련 데이터만 반환
     return NextResponse.json({
       success: true,
-      data: user
+      data: {
+        kodleGameDefeat: user.gameData?.kodleGameDefeat || 0,
+        kodleGameWins: user.gameData?.kodleGameWins || user.gameData?.gameWins || 0,
+        kodleSuccessiveVictory: user.gameData?.kodleSuccessiveVictory || user.gameData?.consecutiveWins || 0,
+        kodleMaximumSuccessiveVictory: user.gameData?.kodleMaximumSuccessiveVictory || 0,
+      }
     });
 
   } catch (error) {
-    console.error('❌ 사용자 정보 조회 오류:', error);
+    console.error('❌ 코들 게임 패배 정보 조회 오류:', error);
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
