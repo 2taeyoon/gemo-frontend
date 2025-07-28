@@ -4,13 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUser } from "@/contexts/UserContext";
 import Link from "next/link";
-import "../../styles/check.css";
+import "../../styles/mypage.css";
 
 /**
- * 출석체크 페이지 컴포넌트
- * 사용자의 출석체크 기능과 연속 출석 기록을 관리합니다.
+ * 마이페이지 컴포넌트
+ * 사용자의 출석체크 기능과 게임 통계를 관리합니다.
  */
-export default function CheckPage() {
+export default function MyPage() {
   // NextAuth 세션 정보
   const { data: session, status } = useSession();
   
@@ -132,8 +132,8 @@ export default function CheckPage() {
   // 로딩 상태 표시
   if (status === "loading" || loading || statusLoading) {
     return (
-      <div className="check-container">
-        <div className="check-card">
+      <div className="mypage-container">
+        <div className="mypage-card">
           <div className="loading-spinner">
             <div className="spinner"></div>
             <p>로딩 중...</p>
@@ -146,12 +146,12 @@ export default function CheckPage() {
   // 로그인하지 않은 경우
   if (status === "unauthenticated") {
     return (
-      <div className="check-container">
-        <div className="check-card">
+      <div className="mypage-container">
+        <div className="mypage-card">
           <div className="login-required">
             <h2>로그인이 필요합니다</h2>
-            <p>출석체크를 하려면 먼저 로그인해주세요.</p>
-            <Link href="/login" className="login-button">
+            <p>마이페이지를 보려면 먼저 로그인해주세요.</p>
+            <Link href="/auth" className="login-button">
               로그인하기
             </Link>
           </div>
@@ -163,8 +163,8 @@ export default function CheckPage() {
   // 사용자 정보가 없는 경우
   if (!user || !attendanceStatus) {
     return (
-      <div className="check-container">
-        <div className="check-card">
+      <div className="mypage-container">
+        <div className="mypage-card">
           <div className="error-message">
             <h2>오류가 발생했습니다</h2>
             <p>사용자 정보를 불러올 수 없습니다.</p>
@@ -178,11 +178,11 @@ export default function CheckPage() {
   }
 
   return (
-    <div className="check-container">
-      <div className="check-card">
-        <div className="check-header">
-          <h1 className="check-title">📅 출석체크</h1>
-          <p className="check-subtitle">매일 출석하고 경험치를 획득하세요!</p>
+    <div className="mypage-container">
+      <div className="mypage-card">
+        <div className="mypage-header">
+          <h1 className="mypage-title">📊 마이페이지</h1>
+          <p className="mypage-subtitle">게임 통계와 출석체크를 관리하세요!</p>
         </div>
 
         {/* 현재 사용자 레벨 정보 */}
@@ -231,45 +231,48 @@ export default function CheckPage() {
           )}
         </div>
 
-        {/* 출석 통계 및 게임 통계 */}
-        <div className="attendance-stats">
-          <div className="stat-item">
-            <div className="stat-number">{attendanceStatus?.consecutiveAttendance || 0}</div>
-            <div className="stat-label">연속 출석</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">{user.kodleGameWins || user.gameWins || 0}</div>
-            <div className="stat-label">코들 게임 승리</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">{user.kodleGameDefeat || 0}</div>
-            <div className="stat-label">코들 게임 패배</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">{user.kodleSuccessiveVictory || user.consecutiveWins || 0}</div>
-            <div className="stat-label">코들 게임 연속 승리</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">{user.kodleMaximumSuccessiveVictory || 0}</div>
-            <div className="stat-label">코들 게임 최대 연속 승리</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">
-              {/* 승률 계산: (승리 / (승리 + 패배)) * 100, 소수점 1자리까지 표시 */}
-              {(() => {
-                const wins = user.kodleGameWins || user.gameWins || 0;
-                const defeats = user.kodleGameDefeat || 0;
-                const totalGames = wins + defeats;
-                if (totalGames === 0) return '0.0';
-                return ((wins / totalGames) * 100).toFixed(1);
-              })()}%
+        {/* 게임 통계 */}
+        <div className="stats-section">
+          <h3>🎮 게임 통계</h3>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-number">{attendanceStatus?.consecutiveAttendance || 0}</div>
+              <div className="stat-label">연속 출석</div>
             </div>
-            <div className="stat-label">코들 게임 승률</div>
+            <div className="stat-item">
+              <div className="stat-number">{user.kodleGameWins || user.gameWins || 0}</div>
+              <div className="stat-label">코들 게임 승리</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">{user.kodleGameDefeat || 0}</div>
+              <div className="stat-label">코들 게임 패배</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">{user.kodleSuccessiveVictory || user.consecutiveWins || 0}</div>
+              <div className="stat-label">코들 게임 연속 승리</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">{user.kodleMaximumSuccessiveVictory || 0}</div>
+              <div className="stat-label">코들 게임 최대 연속 승리</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">
+                {/* 승률 계산: (승리 / (승리 + 패배)) * 100, 소수점 1자리까지 표시 */}
+                {(() => {
+                  const wins = user.kodleGameWins || user.gameWins || 0;
+                  const defeats = user.kodleGameDefeat || 0;
+                  const totalGames = wins + defeats;
+                  if (totalGames === 0) return '0.0';
+                  return ((wins / totalGames) * 100).toFixed(1);
+                })()}%
+              </div>
+              <div className="stat-label">코들 게임 승률</div>
+            </div>
           </div>
         </div>
 
         {/* 출석 보상 안내 */}
-        <div className="reward-info">
+        <div className="rewards-section">
           <h3>🎁 출석 보상</h3>
           <div className="reward-list">
             <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 1 ? 'achieved' : ''}`}>
@@ -309,7 +312,7 @@ export default function CheckPage() {
         </div>
 
         {/* 홈으로 돌아가기 */}
-        <div className="check-footer">
+        <div className="mypage-footer">
           <Link href="/" className="home-link">
             🏠 홈으로 돌아가기
           </Link>

@@ -64,7 +64,7 @@ export default function Header() {
         dark: "/favicons/kodle/favicon-192x192-white.png"
       }
     },
-    check: {
+    mypage: {
       text: "Gemo",
       link: "/",
       logo: {
@@ -89,8 +89,8 @@ export default function Header() {
     if (pathname.startsWith("/kodle")) {
       return pageConfig.kodle;
     }
-    if (pathname.startsWith("/check")) {
-      return pageConfig.check;
+    if (pathname.startsWith("/mypage")) {
+      return pageConfig.mypage;
     }
     return pageConfig.default;
   };
@@ -115,19 +115,19 @@ export default function Header() {
         {status === "authenticated" && (
           <nav className="header_nav">
             <Link 
-              href="/check" 
+              href="/mypage" 
               style={{
-                color: pathname === '/check' ? '#0070f3' : '#666',
+                color: pathname === '/mypage' ? '#0070f3' : '#666',
                 textDecoration: 'none',
-                fontWeight: pathname === '/check' ? '600' : '400',
+                fontWeight: pathname === '/mypage' ? '600' : '400',
                 fontSize: '14px',
                 padding: '8px 12px',
                 borderRadius: '4px',
-                backgroundColor: pathname === '/check' ? '#f0f8ff' : 'transparent',
+                backgroundColor: pathname === '/mypage' ? '#f0f8ff' : 'transparent',
                 transition: 'all 0.2s ease'
               }}
             >
-              출석체크
+              마이페이지
             </Link>
           </nav>
         )}
