@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
+import { invalidateAdminCache } from '@/lib/adminAuth';
 
 /**
  * NextAuth 설정
@@ -21,28 +22,30 @@ const handler = NextAuth({
   },
   
   pages: {
-    signIn: '/login',
+    signIn: '/auth',
   },
   
   debug: process.env.NODE_ENV === 'development',
   
   callbacks: {
     /**
-     * JWT 콜백 - 토큰에 userId 포함
+     * JWT 콜백 - 토큰에 userId와 superAdmin 포함
      */
     async jwt({ token, user }) {
       if (user) {
         token.userId = user.id;
+        token.superAdmin = (user as any).superAdmin || false;
       }
       return token;
     },
 
     /**
-     * 세션 콜백 - 세션에 userId 포함
+     * 세션 콜백 - 세션에 userId와 superAdmin 포함
      */
     async session({ session, token }) {
       if (token?.userId && session.user) {
         (session.user as any).id = token.userId as string;
+        (session.user as any).superAdmin = token.superAdmin as boolean;
       }
       return session;
     },
@@ -64,6 +67,11 @@ const handler = NextAuth({
         if (existingUser) {
           console.log('✅ 기존 사용자 로그인:', user.email);
           user.id = existingUser._id.toString();
+          // 기존 사용자의 superAdmin 상태를 세션에 포함
+          (user as any).superAdmin = existingUser.superAdmin || false;
+          
+          // 관리자 권한이 변경되었을 수 있으므로 캐시 무효화
+          invalidateAdminCache(user.id);
         } else {
           console.log('🆕 신규 사용자 생성:', user.email);
           
@@ -72,6 +80,7 @@ const handler = NextAuth({
             name: user.name,
             email: user.email,
             image: user.image,
+            superAdmin: false,
             emailVerified: null,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -100,6 +109,8 @@ const handler = NextAuth({
 
           const result = await usersCollection.insertOne(newUser);
           user.id = result.insertedId.toString();
+          // 신규 사용자의 superAdmin 상태를 세션에 포함 (기본값 false)
+          (user as any).superAdmin = false;
           
           console.log('✅ 신규 사용자 생성 완료:', user.email, 'ID:', user.id);
         }

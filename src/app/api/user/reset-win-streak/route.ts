@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { verifyAdminAccess, createUnauthorizedResponse, isDirectUrlAccess } from '@/lib/adminAuth';
 
 // NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
@@ -43,6 +44,14 @@ const authOptions = {
  */
 export async function POST(request: NextRequest) {
   try {
+    // 직접 URL 접근인 경우에만 관리자 권한 확인
+    if (isDirectUrlAccess(request)) {
+      const isAdmin = await verifyAdminAccess(request);
+      if (!isAdmin) {
+        return createUnauthorizedResponse(request);
+      }
+    }
+
     // 세션 확인
     const session = await getServerSession(authOptions);
     
@@ -128,6 +137,14 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // 직접 URL 접근인 경우에만 관리자 권한 확인
+    if (isDirectUrlAccess(request)) {
+      const isAdmin = await verifyAdminAccess(request);
+      if (!isAdmin) {
+        return createUnauthorizedResponse(request);
+      }
+    }
+
     // 세션 확인
     const session = await getServerSession(authOptions);
     

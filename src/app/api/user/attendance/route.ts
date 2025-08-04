@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getRequiredXpForLevel, calculateLevelFromTotalXp } from '@/utils/levelCalculation';
+import { verifyAdminAccess, createUnauthorizedResponse, isDirectUrlAccess } from '@/lib/adminAuth';
 
 // NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
@@ -41,6 +42,14 @@ const authOptions = {
  */
 export async function POST(request: NextRequest) {
   try {
+    // 직접 URL 접근인 경우 관리자 권한 확인
+    if (isDirectUrlAccess(request)) {
+      const isAdmin = await verifyAdminAccess(request);
+      if (!isAdmin) {
+        return createUnauthorizedResponse(request);
+      }
+    }
+
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
@@ -169,8 +178,15 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // 직접 URL 접근인 경우에만 관리자 권한 확인
+    if (isDirectUrlAccess(request)) {
+      const isAdmin = await verifyAdminAccess(request);
+      if (!isAdmin) {
+        return createUnauthorizedResponse(request);
+      }
+    }
+
     const session = await getServerSession(authOptions);
-    
     if (!session?.user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
