@@ -5,10 +5,12 @@ import "@/styles/global.css"
 import "@/styles/common.css"
 import "@/styles/darkmode.css"
 import "@/styles/fonts/pretendard.css"
+import "@/styles/not-found.css"
 
 import { UserProvider } from "@/contexts/UserContext"
 import Header from "@/components/layouts/Header"
-import SessionWrapper from "@/components/SessionWrapper"
+import SessionWrapper from "@/components/layouts/SessionWrapper"
+import { headers } from "next/headers"
 
 
 export const metadata: Metadata = {
