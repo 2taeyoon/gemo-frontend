@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useUser } from "@/contexts/UserContext";
-import LevelBar from "@/components/LevelBar";
+import LevelBar from "@/components/ui/LevelBar";
 
 /**
  * 헤더 컴포넌트
@@ -20,6 +20,14 @@ export default function Header() {
   
   // 사용자 정보 (MongoDB에서 가져온 데이터)
   const { user, loading, updateThema } = useUser();
+
+  // 유효한 경로 목록
+  const validRoutes = ['/', '/auth', '/kodle', '/mypage'];
+  
+  // 404 페이지나 존재하지 않는 경로에서는 Header를 렌더링하지 않음
+  if (pathname === "/404" || !validRoutes.includes(pathname)) {
+    return null;
+  }
 
   // 다크모드 상태는 user.thema 값을 기반으로 계산
   const darkMode = user?.thema === 'dark';
