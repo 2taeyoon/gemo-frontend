@@ -2,26 +2,23 @@
 
 import { useState, useEffect } from "react"
 import { useUser } from "@/contexts/UserContext"
-import { decomposeKorean, checkGuess } from "@/utils/korean"
+import { decomposeKorean, checkGuess } from "@/utils/koreanWordSplit"
 import "@/styles/kodle/kodle.css"
 
-// 한글 단어 데이터 타입 정의
-interface WordData {
-  easy: { word: string, definition: string }[]
-}
+// 유틸 함수들
+import { 
+  keyboardMapping, 
+  initializeGame as initializeGameUtil,
+  handleKeyPress as handleKeyPressUtil
+} from "@/utils/kodleGame"
 
-// 영어 키보드를 한글 자모로 매핑하는 객체
-// 예: 'q' 키를 누르면 'ㅂ'이 입력됩니다
-const keyboardMapping: { [key: string]: string } = {
-  // 기본 자음 매핑
-  q: "ㅂ", w: "ㅈ", e: "ㄷ", r: "ㄱ", t: "ㅅ",
-  a: "ㅁ", s: "ㄴ", d: "ㅇ", f: "ㄹ", g: "ㅎ",
-  z: "ㅋ", x: "ㅌ", c: "ㅊ", v: "ㅍ",
-  // 기본 모음 매핑
-  y: "ㅛ", u: "ㅕ", i: "ㅑ", o: "ㅐ", p: "ㅔ",
-  h: "ㅗ", j: "ㅓ", k: "ㅏ", l: "ㅣ",
-  b: "ㅠ", n: "ㅜ", m: "ㅡ",
-}
+// 분리된 컴포넌트들
+import UserInfo from "@/components/kodle/UserInfo"
+import AnswerDisplay from "@/components/kodle/AnswerDisplay"
+import GameGrid from "@/components/kodle/GameGrid"
+import KeyboardGuide from "@/components/kodle/KeyboardGuide"
+import KeyboardHelp from "@/components/kodle/KeyboardHelp"
+import GameKeyboard from "@/components/kodle/GameKeyboard"
 
 export default function KodlePage() {
   // 사용자 컨텍스트에서 사용자 정보와 관련 함수들을 가져옵니다
@@ -57,8 +54,6 @@ export default function KodlePage() {
   const [keyStates, setKeyStates] = useState<{
     [key: string]: "correct" | "present" | "absent" | "";
   }>({});
-
-
 
   // 컴포넌트가 처음 렌더링될 때 게임을 초기화합니다
   useEffect(() => {
@@ -115,13 +110,7 @@ export default function KodlePage() {
   // 게임을 초기화하는 함수
   const initializeGame = async () => {
     try {
-      // 한글 단어 목록을 불러옵니다
-      const response = await fetch("/2word_easy.json");
-      const data: WordData = await response.json();
-
-      // 랜덤하게 단어를 선택합니다
-      const randomWordData = data.easy[Math.floor(Math.random() * data.easy.length)];
-      const randomWord = randomWordData.word;
+      const { randomWord } = await initializeGameUtil();
 
       // 선택된 단어를 자모로 분해합니다
       const decomposed = decomposeKorean(randomWord);
@@ -154,44 +143,20 @@ export default function KodlePage() {
     }
   };
 
-  // 화면에 표시할 키보드 레이아웃
-  const keyboardRows = [
-    ["ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅛ", "ㅕ", "ㅑ"],
-    ["ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅗ", "ㅓ", "ㅏ", "ㅣ"],
-    ["ㅋ", "ㅌ", "ㅊ", "ㅍ", "ㅠ", "ㅜ", "ㅡ", "ㅐ", "ㅔ"],
-    ["입력", "삭제"],
-  ];
-
   // 키 입력을 처리하는 함수
   const handleKeyPress = (key: string) => {
-    if (gameOver) return;
-
-    if (key === "삭제") {
-      // 백스페이스: 이전 글자 삭제
-      if (currentCol > 0) {
-        const newGrid = [...grid];
-        newGrid[currentRow][currentCol - 1] = "";
-        setGrid(newGrid);
-        setCurrentCol(currentCol - 1);
-      }
-    } else if (key === "입력") {
-      // 엔터: 현재 행의 답안 제출
-      if (currentCol === targetJamo.length) {
-        submitGuess();
-      } else {
-        setMessage("모든 칸을 채워주세요!");
-        // 2초 후 메시지 제거
-        setTimeout(() => setMessage(""), 2000);
-      }
-    } else {
-      // 일반 글자 입력
-      if (currentCol < targetJamo.length) {
-        const newGrid = [...grid];
-        newGrid[currentRow][currentCol] = key;
-        setGrid(newGrid);
-        setCurrentCol(currentCol + 1);
-      }
-    }
+    handleKeyPressUtil(
+      key,
+      gameOver,
+      currentRow,
+      currentCol,
+      targetJamo.length,
+      grid,
+      setGrid,
+      setCurrentCol,
+      submitGuess,
+      setMessage
+    );
   };
 
   // 사용자의 추측을 제출하고 결과를 확인하는 함수
@@ -251,164 +216,39 @@ export default function KodlePage() {
     }
   };
 
-  // 셀의 CSS 클래스를 결정하는 함수
-  const getCellClass = (state: string, hasContent: boolean) => {
-    const className = "cell";
-
-    if (!hasContent) {
-      return `${className} cellEmpty`;
-    }
-
-    switch (state) {
-      case "correct":
-        return `${className} cell_correct`;
-      case "present":
-        return `${className} cell_present`;
-      case "absent":
-        return `${className} cell_absent`;
-      default:
-        return `${className} cell_filled`;
-    }
-  };
-
-  // 키보드 키의 CSS 클래스를 결정하는 함수
-  const getKeyClass = (key: string) => {
-    const state = keyStates[key];
-    const className = "key";
-
-    switch (state) {
-      case "correct":
-        return `${className} key_correct`;
-      case "present":
-        return `${className} key_present`;
-      case "absent":
-        return `${className} key_absent`;
-      default:
-        return `${className} key_default`;
-    }
-  };
-
   // 로딩 중일 때 표시할 화면
   if (!targetJamo.length) {
     return <div className="loading">로딩 중...</div>;
   }
-	console.log("session.user", user);
 
+  console.log("session.user", user);
 
   return (
     <div className="container">
-			{/* <div className="loading">로딩 중...</div> */}
-      {user ? (
-        <div>
-          <p>사용자 이름: {user.name}</p>
-          <p>사용자 ID: {user.id}</p>
-        </div>
-      ) : (
-        <div>로그인이 필요합니다.</div>
-      )}
-
-
+      <UserInfo user={user} />
 
       {/* 테스트용 정답 표시 */}
-      <div style={{
-        backgroundColor: '#ff6b6b',
-        color: 'white',
-        padding: '10px',
-        borderRadius: '8px',
-        textAlign: 'center',
-        marginBottom: '20px',
-        fontSize: '18px',
-        fontWeight: 'bold'
-      }}>
-        🎯 테스트용 정답: {targetWord} ({targetJamo.join(" ")})
-      </div>
+      <AnswerDisplay targetWord={targetWord} targetJamo={targetJamo} />
       
       {/* 게임 그리드 */}
-      <div
-        className="game_grid"
-        style={{
-          gridTemplateColumns: `repeat(${targetJamo.length}, 1fr)`,
-        }}>
-        {grid.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <div
-              key={`${rowIndex}-${colIndex}`}
-              className={getCellClass(
-                cellStates[rowIndex][colIndex],
-                cell !== "",
-              )}>
-              {cell}
-            </div>
-          )),
-        )}
-      </div>
+      <GameGrid 
+        grid={grid} 
+        cellStates={cellStates} 
+        targetJamoLength={targetJamo.length} 
+      />
 
       {/* 키보드 가이드 */}
-      <div className="guide">
-        <div className="guide_title">🎯 키보드 색상 가이드</div>
-        <div className="guide_items">
-          <div className="guide_item">
-            <div
-              className="guide_color guide_correct"></div>
-            <span>정확한 위치 확정</span>
-          </div>
-          <div className="guide_item">
-            <div
-              className="guide_color guide_present"></div>
-            <span>포함되지만 위치 미확정</span>
-          </div>
-          <div className="guide_item">
-            <div className="guide_color guide_absent"></div>
-            <span>포함되지 않음</span>
-          </div>
-          <div className="guide_item">
-            <div className="guide_color guide_unused"></div>
-            <span>미사용</span>
-          </div>
-        </div>
-      </div>
+      <KeyboardGuide />
 
       {/* 키보드 입력 도움말 */}
-      <div className="keyboard_help">
-        <div className="guide_title">⌨️ 키보드 입력 가능!</div>
-        <div className="help_content">
-          <div>
-            <strong>자음:</strong> Q(ㅂ) W(ㅈ) E(ㄷ) R(ㄱ) T(ㅅ) A(ㅁ) S(ㄴ)
-            D(ㅇ) F(ㄹ) G(ㅎ) Z(ㅋ) X(ㅌ) C(ㅊ) V(ㅍ)
-          </div>
-          <div>
-            <strong>모음:</strong> Y(ㅛ) U(ㅕ) I(ㅑ) O(ㅐ) P(ㅔ) H(ㅗ) J(ㅓ)
-            K(ㅏ) L(ㅣ) B(ㅠ) N(ㅜ) M(ㅡ)
-          </div>
-          <div>
-            <strong>복합 입력:</strong> ㅢ = ㅡ+ㅣ, ㄲ = ㄱ+ㄱ, ㅝ = ㅜ+ㅓ 등
-          </div>
-          <div>
-            <strong>조작:</strong> Enter(입력) Backspace(삭제)
-          </div>
-        </div>
-      </div>
+      <KeyboardHelp />
 
       {/* 화면 키보드 */}
-      <div className="keyboard">
-        {keyboardRows.map((row, rowIndex) => (
-          <div key={rowIndex} className="keyboard_row">
-            {row.map((key) => (
-              <button
-                key={key}
-                onClick={() => handleKeyPress(key)}
-                disabled={gameOver}
-                className={
-                  key === "입력" || key === "삭제"
-                    ? `key key_special`
-                    : getKeyClass(key)
-                }>
-                {key}
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
+      <GameKeyboard 
+        keyStates={keyStates}
+        gameOver={gameOver}
+        onKeyPress={handleKeyPress}
+      />
 
       {/* 새 게임 버튼 */}
       {gameOver && (
