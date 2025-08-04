@@ -1,0 +1,26 @@
+/* 404 페이지에서 헤더 숨기기 */
+.not-found-page ~ header,
+.not-found-page + header,
+.not-found-page header {
+  display: none !important;
+}
+
+/* 404 페이지가 렌더링될 때 헤더 숨기기 */
+.not-found-page {
+  position: relative;
+}
+
+.not-found-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 1000;
+}
+
+/* 404 페이지가 렌더링될 때 body에 클래스 추가 */
+body:has(.not-found-page) header {
+  display: none !important;
+} 
