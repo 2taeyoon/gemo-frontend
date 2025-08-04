@@ -14,6 +14,7 @@ interface User {
   name: string // 사용자 이름
   email: string // 이메일 주소
   thema: 'light' | 'dark' // 다크모드 설정
+  superAdmin: boolean // 관리자 권한 여부
   // gameData 객체의 정보들
   level: number // 현재 레벨
   currentXp: number // 현재 레벨에서의 경험치
@@ -91,7 +92,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch('/api/user/profile')
+      const response = await fetch('/api/user/profile', {
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
       const result = await response.json()
 
       if (result.success && result.data) {
@@ -102,6 +107,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           name: profile.name,
           email: profile.email,
           thema: profile.thema || 'light', // 기본값은 light
+          superAdmin: profile.superAdmin || false, // 관리자 권한 여부
           level: profile.gameData?.level || 1,
           currentXp: profile.gameData?.currentXp || 0,
           totalXp: profile.gameData?.totalXp || 0,
@@ -163,6 +169,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ amount, reason }),
       })
@@ -204,6 +211,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
@@ -249,6 +257,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
@@ -291,6 +300,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
@@ -324,6 +334,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
@@ -370,6 +381,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
       })
 
@@ -410,6 +422,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ thema }),
       })
