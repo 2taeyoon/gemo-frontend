@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import AppleProvider from 'next-auth/providers/apple';
 import clientPromise from '@/lib/mongodb';
 
 /**
@@ -11,6 +12,19 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    // 🛠 애플 로그인 설정 (아래 환경 변수에 실제 값을 설정해야 합니다)
+    // TODO: 애플 개발자 계정에서 발급받은 값들로 환경 변수를 설정하세요.
+    AppleProvider({
+      clientId: process.env.APPLE_CLIENT_ID || "APPLE_CLIENT_ID",
+      clientSecret: {
+        // 애플 팀 ID
+        teamId: process.env.APPLE_TEAM_ID || "TEAM_ID",
+        // 애플에서 발급받은 Private Key (줄바꿈 문자를 \n으로 치환하여 환경 변수에 저장)
+        privateKey: process.env.APPLE_PRIVATE_KEY || "APPLE_PRIVATE_KEY",
+        // Key ID
+        keyId: process.env.APPLE_KEY_ID || "KEY_ID",
+      },
     }),
   ],
   
@@ -49,6 +63,7 @@ const handler = NextAuth({
 
     /**
      * 사용자 로그인 시 users 컬렉션에 저장
+     * Google/Apple 등 모든 OAuth Provider에서 동일하게 동작합니다.
      */
     async signIn({ user, account, profile }) {
       try {

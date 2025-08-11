@@ -7,7 +7,7 @@ import "@/styles/auth/auth.css";
 
 /**
  * 로그인 페이지 메인 컴포넌트
- * Google OAuth를 통한 사용자 로그인 기능을 제공합니다.
+ * Google / Apple OAuth를 통한 사용자 로그인 기능을 제공합니다.
  */
 export default function LoginContent() {
   // 로그인 제공자 목록을 저장하는 상태
@@ -47,21 +47,36 @@ export default function LoginContent() {
       <div className="login-card">
         <h1 className="login-title">로그인</h1>
 
-        {/* 로그인 제공자가 있는 경우 로그인 버튼들을 표시 */}
-        {providers && Object.values(providers).map((provider: any) => (
-          <button
-            key={provider.id}
-            onClick={() => handleProviderSignIn(provider.id)}
-            disabled={isLoading}
-            className={`login-button ${
-              provider.id === "google" ? "login-button--google" : "login-button--default"
-            } ${isLoading ? "login-button--loading" : ""}`}
-          >
-            {/* 구글 로그인 버튼에는 아이콘 추가 */}
-            {provider.id === "google" && "🔗"}
-            {isLoading ? "로그인 중..." : `${provider.name}으로 로그인`}
-          </button>
-        ))}
+          {/* 로그인 제공자가 있는 경우 Google과 Apple 로그인 버튼을 표시 */}
+          {providers && (
+            <>
+              {providers.google && (
+                <button
+                  onClick={() => handleProviderSignIn(providers.google.id)}
+                  disabled={isLoading}
+                  className={`login-button login-button--google ${
+                    isLoading ? "login-button--loading" : ""
+                  }`}
+                >
+                  {/* 구글 로그인 버튼에는 아이콘 추가 */}
+                  🔗{isLoading ? "로그인 중..." : ` ${providers.google.name}으로 로그인`}
+                </button>
+              )}
+
+              {providers.apple && (
+                <button
+                  onClick={() => handleProviderSignIn(providers.apple.id)}
+                  disabled={isLoading}
+                  className={`login-button login-button--apple ${
+                    isLoading ? "login-button--loading" : ""
+                  }`}
+                >
+                  {/* 애플 로그인 버튼 */}
+                  {isLoading ? "로그인 중..." : ` ${providers.apple.name}으로 로그인`}
+                </button>
+              )}
+            </>
+          )}
 
         {/* 홈으로 돌아가기 링크 */}
         <div className="home-link-container">
