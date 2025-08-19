@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import NaverProvider from 'next-auth/providers/naver';
 import clientPromise from '@/lib/mongodb';
 
 /**
@@ -11,6 +12,10 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    NaverProvider({
+      clientId: process.env.NAVER_CLIENT_ID || "",
+      clientSecret: process.env.NAVER_CLIENT_SECRET || "",
     }),
   ],
   
@@ -48,11 +53,11 @@ const handler = NextAuth({
     },
 
     /**
-     * 사용자 로그인 시 users 컬렉션에 저장
+     * 사용자 로그인 시 users 컬렉션에 저장 (Google, Naver 모두 지원)
      */
     async signIn({ user, account, profile }) {
       try {
-        console.log('🔐 로그인 시도:', user.email);
+        console.log('🔐 로그인 시도:', user.email, '제공자:', account?.provider);
         
         const client = await clientPromise;
         const db = client.db('gemo'); // 명시적으로 gemo 데이터베이스 사용
@@ -64,11 +69,27 @@ const handler = NextAuth({
         if (existingUser) {
           console.log('✅ 기존 사용자 로그인:', user.email);
           user.id = existingUser._id.toString();
+          
+          // 로그인 제공자 정보 업데이트 (Google ID, Naver ID 등)
+          const updateData: any = {
+            updatedAt: new Date(),
+          };
+          
+          if (account?.provider === 'google') {
+            updateData.googleId = account.providerAccountId;
+          } else if (account?.provider === 'naver') {
+            updateData.naverId = account.providerAccountId;
+          }
+          
+          await usersCollection.updateOne(
+            { _id: existingUser._id },
+            { $set: updateData }
+          );
         } else {
           console.log('🆕 신규 사용자 생성:', user.email);
           
           // 신규 사용자 생성 (모든 데이터를 users 컬렉션에)
-          const newUser = {
+          const newUser: any = {
             name: user.name,
             email: user.email,
             image: user.image,
@@ -97,11 +118,18 @@ const handler = NextAuth({
             thema: 'light' as const,
             notifications: true,
           };
+          
+          // 로그인 제공자별 ID 저장
+          if (account?.provider === 'google') {
+            newUser.googleId = account.providerAccountId;
+          } else if (account?.provider === 'naver') {
+            newUser.naverId = account.providerAccountId;
+          }
 
           const result = await usersCollection.insertOne(newUser);
           user.id = result.insertedId.toString();
           
-          console.log('✅ 신규 사용자 생성 완료:', user.email, 'ID:', user.id);
+          console.log('✅ 신규 사용자 생성 완료:', user.email, 'ID:', user.id, '제공자:', account?.provider);
         }
 
         return true;

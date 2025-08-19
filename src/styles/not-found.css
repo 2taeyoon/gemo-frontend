@@ -1,0 +1,128 @@
+/* 404 페이지 스타일 */
+.not-found-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.not-found-content {
+  max-width: 600px;
+  width: 100%;
+}
+
+.not-found-title {
+  font-size: clamp(4rem, 8vw, 8rem);
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(45deg, #fff, #e0e7ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.not-found-subtitle {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 1rem 0 2rem 0;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.not-found-description {
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+  opacity: 0.8;
+  line-height: 1.6;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.not-found-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  min-width: 200px;
+  justify-content: center;
+}
+
+.not-found-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.not-found-button--primary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.not-found-button--primary:hover {
+  background: white;
+  color: #667eea;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.not-found-emoji {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* 다크모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .not-found-container {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  }
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .not-found-container {
+    padding: 1rem;
+  }
+  
+  .not-found-actions {
+    width: 100%;
+  }
+  
+  .not-found-button {
+    width: 100%;
+    max-width: 300px;
+  }
+}

@@ -127,22 +127,90 @@ export function checkGuess(guess: string[], answer: string[]): ("correct" | "pre
 
 /**
  * 한글 자모가 유효한지 확인하는 함수
- *
  * @param char - 확인할 문자
- * @returns 유효한 한글 자모인지 여부
+ * @returns 유효한 한글 자모 여부
  */
 export function isValidKoreanJamo(char: string): boolean {
   // 한글 자음과 모음 범위 확인
-  return /[ㄱ-ㅎㅏ-ㅣ]/.test(char)
+  return /[ㄱ-ㅎㅏ-ㅣ]/.test(char);
 }
 
 /**
  * 문자열이 모두 한글인지 확인하는 함수
- *
  * @param str - 확인할 문자열
  * @returns 모두 한글인지 여부
  */
 export function isAllKorean(str: string): boolean {
   // 한글 완성형 문자 범위 확인
   return /^[가-힣]+$/.test(str)
+}
+
+/**
+ * 한글 단어가 유효한지 확인하는 함수
+ * @param word - 확인할 단어
+ * @returns 유효한 한글 단어 여부와 상세 정보
+ */
+export function isValidKoreanWord(word: string): {
+  isValid: boolean;
+  reason?: 'EMPTY' | 'TOO_SHORT' | 'TOO_LONG' | 'INVALID_CHARACTERS' | 'INCOMPLETE_SYLLABLE';
+} {
+  if (!word || word.length === 0) {
+    return { isValid: false, reason: 'EMPTY' };
+  }
+  
+  if (word.length < 2) {
+    return { isValid: false, reason: 'TOO_SHORT' };
+  }
+  
+  if (word.length > 5) {
+    return { isValid: false, reason: 'TOO_LONG' };
+  }
+  
+  // 완성된 한글 음절인지 확인 (가-힣)
+  const koreanSyllableRange = /^[가-힣]+$/;
+  if (!koreanSyllableRange.test(word)) {
+    // 개별 자모가 포함되어 있는지 확인
+    const jamoRange = /[ㄱ-ㅎㅏ-ㅣ]/;
+    if (jamoRange.test(word)) {
+      return { isValid: false, reason: 'INCOMPLETE_SYLLABLE' };
+    } else {
+      return { isValid: false, reason: 'INVALID_CHARACTERS' };
+    }
+  }
+  
+  return { isValid: true };
+}
+
+/**
+ * 한글 단어를 자모로 분해했을 때의 길이 계산
+ * @param word - 한글 단어
+ * @returns 자모 분해 후 길이
+ */
+export function getKoreanJamoLength(word: string): number {
+  return decomposeKorean(word).length;
+}
+
+/**
+ * 두 한글 단어의 유사도 계산 (자모 기준)
+ * @param word1 - 첫 번째 단어
+ * @param word2 - 두 번째 단어
+ * @returns 유사도 (0-1 사이의 값)
+ */
+export function calculateKoreanSimilarity(word1: string, word2: string): number {
+  const jamo1 = decomposeKorean(word1);
+  const jamo2 = decomposeKorean(word2);
+  
+  const maxLength = Math.max(jamo1.length, jamo2.length);
+  if (maxLength === 0) return 0;
+  
+  let matchCount = 0;
+  const minLength = Math.min(jamo1.length, jamo2.length);
+  
+  for (let i = 0; i < minLength; i++) {
+    if (jamo1[i] === jamo2[i]) {
+      matchCount++;
+    }
+  }
+  
+  return matchCount / maxLength;
 }

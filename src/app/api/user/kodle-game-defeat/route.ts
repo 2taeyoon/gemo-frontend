@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { calculateLevelFromTotalXp } from '@/utils/levelCalculation';
+import { calculateKodleDefeatXp } from '@/utils/xpCalculation';
 
 // NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
@@ -86,10 +88,23 @@ export async function POST(request: NextRequest) {
     // 새로운 값들 계산
     const newKodleGameDefeat = currentKodleGameDefeat + 1;
     const newKodleSuccessiveVictory = 0; // 패배 시 연속 승리 초기화
+    
+    // 패배 시 경험치 계산 (유틸리티 사용)
+    const xpResult = calculateKodleDefeatXp();
+    const defeatXp = xpResult.totalXp;
+    const newTotalXp = (user.gameData?.totalXp || 0) + defeatXp;
+    
+    // 새로운 총 경험치를 바탕으로 레벨과 현재 레벨 경험치 계산
+    const { level: newLevel, currentXp: newCurrentXp } = calculateLevelFromTotalXp(newTotalXp);
+    
+    // 레벨업 여부 확인
+    const previousLevel = user.gameData?.level || 1;
+    const leveledUp = newLevel > previousLevel;
 
     console.log(`💔 코들 게임 패배 처리: ${user.email}`);
     console.log(`  - 총 패배: ${currentKodleGameDefeat} → ${newKodleGameDefeat}`);
     console.log(`  - 연속 승리: ${currentKodleSuccessiveVictory} → ${newKodleSuccessiveVictory} (초기화)`);
+    console.log(`  - 경험치: +${defeatXp}XP 획득 (패배 보상)`);
 
     // 게임 통계 업데이트 (새로운 구조 + 하위 호환성)
     await usersCollection.updateOne(
@@ -103,6 +118,11 @@ export async function POST(request: NextRequest) {
           // 하위 호환성을 위한 기존 필드들
           'gameData.consecutiveWins': newKodleSuccessiveVictory,
           
+          // 경험치 및 레벨 업데이트
+          'gameData.totalXp': newTotalXp,
+          'gameData.level': newLevel,
+          'gameData.currentXp': newCurrentXp,
+          
           // 마지막 업데이트 시간
           updatedAt: new Date(),
         }
@@ -115,10 +135,10 @@ export async function POST(request: NextRequest) {
       kodleGameWins: currentKodleGameWins, // 승리 횟수도 포함 (패배해도 승리 횟수는 변하지 않음)
       kodleSuccessiveVictory: newKodleSuccessiveVictory,
       kodleMaximumSuccessiveVictory: user.gameData?.kodleMaximumSuccessiveVictory || 0,
-      // 패배 시에는 경험치 변동 없음
-      level: user.gameData?.level || 1,
-      currentXp: user.gameData?.currentXp || 0,
-      totalXp: user.gameData?.totalXp || 0,
+      level: newLevel,
+      currentXp: newCurrentXp,
+      totalXp: newTotalXp,
+      leveledUp: leveledUp,
     };
 
     console.log(`✅ 코들 게임 패배 처리 완료: ${user.email}`);

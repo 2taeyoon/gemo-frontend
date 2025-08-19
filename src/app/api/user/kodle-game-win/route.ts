@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { calculateLevelFromTotalXp } from '@/utils/levelCalculation';
+import { calculateKodleWinXp } from '@/utils/xpCalculation';
 
 // NextAuth 설정 (JWT 기반)
 const authOptions = {
@@ -92,8 +93,9 @@ export async function POST(request: NextRequest) {
     // 최대 연속 승리 기록 업데이트 (현재 연속 승리가 기존 최대 기록을 넘었을 때만)
     const newKodleMaximumSuccessiveVictory = Math.max(newKodleSuccessiveVictory, currentKodleMaximumSuccessiveVictory);
 
-    // 승리 시 지급할 경험치 (100XP)
-    const victoryXp = 100;
+    // 연승에 따른 경험치 계산 (유틸리티 사용)
+    const xpResult = calculateKodleWinXp(newKodleSuccessiveVictory);
+    const victoryXp = xpResult.totalXp;
     const newTotalXp = (user.gameData?.totalXp || 0) + victoryXp;
 
     // 새로운 총 경험치를 바탕으로 레벨과 현재 레벨 경험치 계산
@@ -107,7 +109,9 @@ export async function POST(request: NextRequest) {
     console.log(`  - 총 승리: ${currentKodleGameWins} → ${newKodleGameWins}`);
     console.log(`  - 연속 승리: ${currentKodleSuccessiveVictory} → ${newKodleSuccessiveVictory}`);
     console.log(`  - 최대 연속 승리: ${currentKodleMaximumSuccessiveVictory} → ${newKodleMaximumSuccessiveVictory}`);
-    console.log(`  - 경험치: +${victoryXp}XP 획득`);
+    console.log(`  - 경험치: +${victoryXp}XP 획득 (${newKodleSuccessiveVictory}연승)`);
+    console.log(`    * 기본 경험치: ${xpResult.baseXp}XP`);
+    console.log(`    * 연승 보너스: ${xpResult.streakBonus}XP`);
 
     // 게임 통계 업데이트 (새로운 구조 + 하위 호환성)
     await usersCollection.updateOne(
@@ -139,7 +143,6 @@ export async function POST(request: NextRequest) {
       kodleGameWins: newKodleGameWins,
       kodleSuccessiveVictory: newKodleSuccessiveVictory,
       kodleMaximumSuccessiveVictory: newKodleMaximumSuccessiveVictory,
-      xpGained: victoryXp,
       level: newLevel,
       currentXp: newCurrentXp,
       totalXp: newTotalXp,

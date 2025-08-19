@@ -3,11 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useUser } from "@/contexts/UserContext";
-import Link from "next/link";
-import "../../styles/mypage.css";
+import UserInfo from "@/components/mypage/UserInfo";
+import AttendanceSection from "@/components/mypage/AttendanceSection";
+import GameStats from "@/components/mypage/GameStats";
+import RewardsSection from "@/components/mypage/RewardsSection";
+import LoadingSpinner from "@/components/mypage/LoadingSpinner";
+import LoginRequired from "@/components/mypage/LoginRequired";
+import ErrorMessage from "@/components/mypage/ErrorMessage";
+import HomeLink from "@/components/mypage/HomeLink";
+import "@/styles/mypage.css";
 
 /**
- * 마이페이지 컴포넌트
+ * 마이페이지 클라이언트 컴포넌트
  * 사용자의 출석체크 기능과 게임 통계를 관리합니다.
  */
 export default function MyPage() {
@@ -131,50 +138,17 @@ export default function MyPage() {
 
   // 로딩 상태 표시
   if (status === "loading" || loading || statusLoading) {
-    return (
-      <div className="mypage-container">
-        <div className="mypage-card">
-          <div className="loading-spinner">
-            <div className="spinner"></div>
-            <p>로딩 중...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   // 로그인하지 않은 경우
   if (status === "unauthenticated") {
-    return (
-      <div className="mypage-container">
-        <div className="mypage-card">
-          <div className="login-required">
-            <h2>로그인이 필요합니다</h2>
-            <p>마이페이지를 보려면 먼저 로그인해주세요.</p>
-            <Link href="/auth" className="login-button">
-              로그인하기
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoginRequired />;
   }
 
   // 사용자 정보가 없는 경우
   if (!user || !attendanceStatus) {
-    return (
-      <div className="mypage-container">
-        <div className="mypage-card">
-          <div className="error-message">
-            <h2>오류가 발생했습니다</h2>
-            <p>사용자 정보를 불러올 수 없습니다.</p>
-            <button onClick={() => window.location.reload()} className="retry-button">
-              다시 시도
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorMessage />;
   }
 
   return (
@@ -186,138 +160,28 @@ export default function MyPage() {
         </div>
 
         {/* 현재 사용자 레벨 정보 */}
-        <div className="user-info">
-          <div className="user-level">
-            <span className="level-text">Lv.{user.level}</span>
-            <span className="xp-text">{user.currentXp} XP</span>
-          </div>
-          <div className="user-name">{user.name}님</div>
-        </div>
+        <UserInfo user={user} />
 
         {/* 출석체크 메인 영역 */}
-        <div className="attendance-main">
-          {attendanceStatus.hasCheckedToday ? (
-            // 이미 출석체크한 경우
-            <div className="attendance-completed">
-              <div className="check-icon">✅</div>
-              <h2>오늘 출석체크 완료!</h2>
-              <p>내일 다시 출석체크할 수 있습니다.</p>
-              <div className="completed-info">
-                <div className="consecutive-days">
-                  <span className="number">{attendanceStatus?.consecutiveAttendance || 0}</span>
-                  <span className="label">연속 출석</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // 아직 출석체크하지 않은 경우
-            <div className="attendance-pending">
-              <div className="check-icon-pending">📋</div>
-              <h2>오늘의 출석체크</h2>
-              <p>출석체크하고 경험치를 받아보세요!</p>
-              
-              <button 
-                onClick={handleCheckAttendance}
-                disabled={isProcessing}
-                className={`check-button ${isProcessing ? 'processing' : ''}`}
-              >
-                {isProcessing ? '처리 중...' : '출석체크하기'}
-              </button>
-
-              <div className="expected-reward">
-                <p>예상 보상: <strong>{getBonusXp((attendanceStatus?.consecutiveAttendance || 0) + 1)} XP</strong></p>
-              </div>
-            </div>
-          )}
-        </div>
+        <AttendanceSection
+          attendanceStatus={attendanceStatus}
+          isProcessing={isProcessing}
+          onCheckAttendance={handleCheckAttendance}
+          getBonusXp={getBonusXp}
+        />
 
         {/* 게임 통계 */}
-        <div className="stats-section">
-          <h3>🎮 게임 통계</h3>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-number">{attendanceStatus?.consecutiveAttendance || 0}</div>
-              <div className="stat-label">연속 출석</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{user.kodleGameWins || user.gameWins || 0}</div>
-              <div className="stat-label">코들 게임 승리</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{user.kodleGameDefeat || 0}</div>
-              <div className="stat-label">코들 게임 패배</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{user.kodleSuccessiveVictory || user.consecutiveWins || 0}</div>
-              <div className="stat-label">코들 게임 연속 승리</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">{user.kodleMaximumSuccessiveVictory || 0}</div>
-              <div className="stat-label">코들 게임 최대 연속 승리</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-number">
-                {/* 승률 계산: (승리 / (승리 + 패배)) * 100, 소수점 1자리까지 표시 */}
-                {(() => {
-                  const wins = user.kodleGameWins || user.gameWins || 0;
-                  const defeats = user.kodleGameDefeat || 0;
-                  const totalGames = wins + defeats;
-                  if (totalGames === 0) return '0.0';
-                  return ((wins / totalGames) * 100).toFixed(1);
-                })()}%
-              </div>
-              <div className="stat-label">코들 게임 승률</div>
-            </div>
-          </div>
-        </div>
+        <GameStats user={user} attendanceStatus={attendanceStatus} />
 
         {/* 출석 보상 안내 */}
-        <div className="rewards-section">
-          <h3>🎁 출석 보상</h3>
-          <div className="reward-list">
-            <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 1 ? 'achieved' : ''}`}>
-              <span className="reward-day">1일</span>
-              <span className="reward-desc">기본 50 XP</span>
-            </div>
-            <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 3 ? 'achieved' : ''}`}>
-              <span className="reward-day">3일</span>
-              <span className="reward-desc">150 XP (기본 50 + 보너스 100)</span>
-            </div>
-            <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 7 ? 'achieved' : ''}`}>
-              <span className="reward-day">7일</span>
-              <span className="reward-desc">250 XP (기본 50 + 보너스 200)</span>
-            </div>
-            <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 14 ? 'achieved' : ''}`}>
-              <span className="reward-day">14일</span>
-              <span className="reward-desc">350 XP (기본 50 + 보너스 300)</span>
-            </div>
-            <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 21 ? 'achieved' : ''}`}>
-              <span className="reward-day">21일</span>
-              <span className="reward-desc">450 XP (기본 50 + 보너스 400)</span>
-            </div>
-            <div className={`reward-item ${(attendanceStatus?.consecutiveAttendance || 0) >= 30 ? 'achieved' : ''}`}>
-              <span className="reward-day">30일</span>
-              <span className="reward-desc">550 XP (기본 50 + 보너스 500)</span>
-            </div>
-          </div>
-
-          {/* 다음 보상까지의 진행도 */}
-          {getDaysToNextReward(attendanceStatus?.consecutiveAttendance || 0) > 0 && (
-            <div className="next-reward">
-              <p>
-                다음 보너스 보상까지 <strong>{getDaysToNextReward(attendanceStatus?.consecutiveAttendance || 0)}일</strong> 남았습니다!
-              </p>
-            </div>
-          )}
-        </div>
+        <RewardsSection
+          attendanceStatus={attendanceStatus}
+          getDaysToNextReward={getDaysToNextReward}
+        />
 
         {/* 홈으로 돌아가기 */}
-        <div className="mypage-footer">
-          <Link href="/" className="home-link">
-            🏠 홈으로 돌아가기
-          </Link>
-        </div>
+        <HomeLink />
       </div>
     </div>
   );
-} 
+}
