@@ -17,7 +17,7 @@ import "@/styles/mypage.css";
  * 마이페이지 클라이언트 컴포넌트
  * 사용자의 출석체크 기능과 게임 통계를 관리합니다.
  */
-export default function MyPage() {
+export default function Mypage() {
   // NextAuth 세션 정보
   const { data: session, status } = useSession();
   

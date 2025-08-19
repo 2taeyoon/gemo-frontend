@@ -1,5 +1,5 @@
 import React from 'react'
-import MyPage from "./MyPage";
+import Mypage from "./Mypage";
 
 export const metadata = {
 	title: "MyPage",
@@ -11,5 +11,5 @@ export const metadata = {
  * 메타데이터 설정과 클라이언트 컴포넌트 렌더링
  */
 export default function page() {
-	return <MyPage />
+	return <Mypage />
 }
