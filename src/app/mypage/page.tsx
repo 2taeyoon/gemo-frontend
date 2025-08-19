@@ -1,5 +1,5 @@
 import React from 'react'
-import MyPage from "@/app/mypage/MyPage";
+import MyPage from "./MyPage";
 
 export const metadata = {
 	title: "MyPage",
