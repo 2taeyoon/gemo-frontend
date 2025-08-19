@@ -339,9 +339,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           // 하위 호환성을 위한 기존 필드들도 업데이트
           gameWins: result.data.kodleGameWins,
           consecutiveWins: result.data.kodleSuccessiveVictory,
-          // level: result.data.level,
-          // currentXp: result.data.currentXp,
-          // totalXp: result.data.totalXp,
         } : null)
 
         console.log(`🏆 코들 게임 승리! 총 ${result.data.kodleGameWins}승, 연승 ${result.data.kodleSuccessiveVictory}, 최고 연승 ${result.data.kodleMaximumSuccessiveVictory}`)
@@ -386,10 +383,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           // 하위 호환성을 위한 기존 필드들도 업데이트
           gameWins: result.data.kodleGameWins,
           consecutiveWins: result.data.kodleSuccessiveVictory,
-          // 경험치 업데이트 추가
-          // level: result.data.level,
-          // currentXp: result.data.currentXp,
-          // totalXp: result.data.totalXp,
         } : null)
 
         console.log(`💔 코들 게임 패배! 총 승리 ${result.data.kodleGameWins}회, 총 패배 ${result.data.kodleGameDefeat}회, 연속 승리 초기화`)

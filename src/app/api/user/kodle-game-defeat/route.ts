@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { calculateLevelFromTotalXp } from '@/utils/levelCalculation';
+import { calculateKodleDefeatXp } from '@/utils/xpCalculation';
 
 // NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
@@ -88,8 +89,9 @@ export async function POST(request: NextRequest) {
     const newKodleGameDefeat = currentKodleGameDefeat + 1;
     const newKodleSuccessiveVictory = 0; // 패배 시 연속 승리 초기화
     
-    // 패배 시에도 20XP 지급
-    const defeatXp = 20;
+    // 패배 시 경험치 계산 (유틸리티 사용)
+    const xpResult = calculateKodleDefeatXp();
+    const defeatXp = xpResult.totalXp;
     const newTotalXp = (user.gameData?.totalXp || 0) + defeatXp;
     
     // 새로운 총 경험치를 바탕으로 레벨과 현재 레벨 경험치 계산
@@ -133,7 +135,6 @@ export async function POST(request: NextRequest) {
       kodleGameWins: currentKodleGameWins, // 승리 횟수도 포함 (패배해도 승리 횟수는 변하지 않음)
       kodleSuccessiveVictory: newKodleSuccessiveVictory,
       kodleMaximumSuccessiveVictory: user.gameData?.kodleMaximumSuccessiveVictory || 0,
-      // 패배 시에도 20XP 지급으로 경험치 변동
       level: newLevel,
       currentXp: newCurrentXp,
       totalXp: newTotalXp,
