@@ -50,6 +50,20 @@
   color: white;
 }
 
+.login-button--google:hover {
+  background-color: #c23321;
+}
+
+/* 네이버 로그인 버튼 */
+.login-button--naver {
+  background-color: #03c75a;
+  color: white;
+}
+
+.login-button--naver:hover {
+  background-color: #02b351;
+}
+
 /* 기본 로그인 버튼 */
 .login-button--default {
   background-color: #333;
