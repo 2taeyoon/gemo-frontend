@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useUser } from "@/contexts/UserContext";
-import LevelBar from "@/components/LevelBar";
+import LevelBar from "@/components/ui/LevelBar";
 
 /**
  * 헤더 컴포넌트
