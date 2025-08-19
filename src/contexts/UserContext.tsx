@@ -320,7 +320,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!user) return
 
     try {
-      const response = await fetch('/api/user/game-win', {
+      const response = await fetch(`/api/user/kodle-game-win`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -339,9 +339,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           // 하위 호환성을 위한 기존 필드들도 업데이트
           gameWins: result.data.kodleGameWins,
           consecutiveWins: result.data.kodleSuccessiveVictory,
-          level: result.data.level,
-          currentXp: result.data.currentXp,
-          totalXp: result.data.totalXp,
+          // level: result.data.level,
+          // currentXp: result.data.currentXp,
+          // totalXp: result.data.totalXp,
         } : null)
 
         console.log(`🏆 코들 게임 승리! 총 ${result.data.kodleGameWins}승, 연승 ${result.data.kodleSuccessiveVictory}, 최고 연승 ${result.data.kodleMaximumSuccessiveVictory}`)
@@ -366,7 +366,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!user) return
 
     try {
-      const response = await fetch('/api/user/reset-win-streak', {
+      const response = await fetch(`/api/user/kodle-game-defeat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -386,9 +386,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           // 하위 호환성을 위한 기존 필드들도 업데이트
           gameWins: result.data.kodleGameWins,
           consecutiveWins: result.data.kodleSuccessiveVictory,
+          // 경험치 업데이트 추가
+          // level: result.data.level,
+          // currentXp: result.data.currentXp,
+          // totalXp: result.data.totalXp,
         } : null)
 
         console.log(`💔 코들 게임 패배! 총 승리 ${result.data.kodleGameWins}회, 총 패배 ${result.data.kodleGameDefeat}회, 연속 승리 초기화`)
+
+        // 레벨업 체크 및 상태 업데이트 (패배 시에도 20XP를 받으므로)
+        if (result.data.leveledUp) {
+          setLevelUpInfo({ isLevelUp: true, newLevel: result.data.level })
+        }
       } else {
         console.error('코들 게임 패배 처리 실패:', result.error)
       }
