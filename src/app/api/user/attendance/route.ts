@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getRequiredXpForLevel, calculateLevelFromTotalXp } from '@/utils/levelCalculation';
+import { checkSuperAdminAuth, createNotFoundRedirect } from '@/utils/adminAuth';
 
 // NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
@@ -38,19 +39,18 @@ const authOptions = {
 /**
  * 출석체크 API
  * POST /api/user/attendance
+ * ⚠️ 슈퍼 관리자 권한 필요
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 슈퍼 관리자 권한 검증
+    const authResult = await checkSuperAdminAuth();
     
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+    if (!authResult.isAuthorized) {
+      return createNotFoundRedirect();
     }
 
-    const userId = (session.user as any).id;
+    const userId = authResult.userId!;
 
     // MongoDB 직접 접근
     const client = await clientPromise;
@@ -166,19 +166,18 @@ export async function POST(request: NextRequest) {
 /**
  * 출석 정보 조회 API
  * GET /api/user/attendance
+ * ⚠️ 슈퍼 관리자 권한 필요
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 슈퍼 관리자 권한 검증
+    const authResult = await checkSuperAdminAuth();
     
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+    if (!authResult.isAuthorized) {
+      return createNotFoundRedirect();
     }
 
-    const userId = (session.user as any).id;
+    const userId = authResult.userId!;
 
     // MongoDB 직접 접근
     const client = await clientPromise;
