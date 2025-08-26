@@ -7,7 +7,7 @@ import "@/styles/darkmode.css"
 import "@/styles/fonts/pretendard.css"
 
 import { UserProvider } from "@/contexts/UserContext"
-import Header from "@/components/layouts/Header"
+import ConditionalHeader from "@/components/layouts/ConditionalHeader"
 import SessionWrapper from "@/components/SessionWrapper"
 
 
@@ -40,7 +40,7 @@ export default function RootLayout({
       <body>
         <SessionWrapper>
           <UserProvider>
-            <Header />
+            <ConditionalHeader />
             <main>
               {children}
             </main>

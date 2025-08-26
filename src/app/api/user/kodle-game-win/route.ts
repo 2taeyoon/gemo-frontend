@@ -5,8 +5,9 @@ import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { calculateLevelFromTotalXp } from '@/utils/levelCalculation';
 import { calculateKodleWinXp } from '@/utils/xpCalculation';
+import { checkSuperAdminAuth, createNotFoundRedirect } from '@/utils/adminAuth';
 
-// NextAuth 설정 (JWT 기반)
+// NextAuth 설정 (메인 설정과 동일)
 const authOptions = {
   providers: [
     GoogleProvider({
@@ -37,6 +38,7 @@ const authOptions = {
 /**
  * 코들 게임 승리 처리 API
  * POST /api/user/kodle-game-win
+ * ⚠️ 슈퍼 관리자 권한 필요
  * 
  * 기능:
  * 1. kodleGameWins (총 승리 횟수) 증가
@@ -46,7 +48,7 @@ const authOptions = {
  */
 export async function POST(request: NextRequest) {
   try {
-    // 세션 확인
+    // 세션 확인 (일반 사용자도 접근 가능)
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
@@ -58,11 +60,17 @@ export async function POST(request: NextRequest) {
 
     const userId = (session.user as any).id;
     
-    // 🔍 디버깅 로그 추가
-    console.log('🔍 kodle-game-win API 디버깅:');
-    console.log('  - session.user:', session.user);
+    if (!userId || !ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
+    
+    // 🔍 코들 게임 승리 API 디버깅
+    console.log('🔍 코들 게임 승리 API 호출:');
     console.log('  - userId:', userId);
-    console.log('  - userId type:', typeof userId);
+    console.log('  - email:', session.user.email);
     
     const client = await clientPromise;
     const db = client.db('gemo');
@@ -170,53 +178,22 @@ export async function POST(request: NextRequest) {
  * 코들 게임 승리 정보 조회 API
  * GET /api/user/kodle-game-win
  * 코들 게임 승리와 관련된 통계 정보만 반환합니다.
+ * ⚠️ 슈퍼 관리자 권한 필요
  */
 export async function GET(request: NextRequest) {
   try {
-    // 세션 확인
-    const session = await getServerSession(authOptions);
+    // 슈퍼 관리자 권한 검증
+    const authResult = await checkSuperAdminAuth();
     
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: '로그인이 필요합니다.' },
-        { status: 401 }
-      );
+    if (!authResult.isAuthorized) {
+      return createNotFoundRedirect();
     }
 
-    const userId = (session.user as any).id;
+    const userId = authResult.userId!;
+    const user = authResult.user!;
     
-    console.log('🔍 [GET kodle-game-win] 코들 게임 승리 정보 조회:');
+    console.log('🔍 [GET kodle-game-win] 코들 게임 승리 정보 조회 (슈퍼 관리자):');
     console.log('  - userId:', userId);
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: '사용자 ID를 찾을 수 없습니다.' },
-        { status: 400 }
-      );
-    }
-    
-    const client = await clientPromise;
-    const db = client.db('gemo');
-    const usersCollection = db.collection('users');
-    
-    // ObjectId 유효성 검사
-    if (!ObjectId.isValid(userId)) {
-      console.log('  - ❌ 유효하지 않은 ObjectId:', userId);
-      return NextResponse.json(
-        { error: '유효하지 않은 사용자 ID입니다.' },
-        { status: 400 }
-      );
-    }
-
-    // 현재 사용자 정보 조회
-    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
-        { status: 404 }
-      );
-    }
 
     console.log('✅ 코들 게임 승리 정보 조회 성공:', user.email);
 

@@ -97,6 +97,18 @@ export default function Header() {
 
   const currentConfig = getCurrentConfig();
 
+	
+  
+  // 헤더를 숨길 경로들
+  const hideHeaderPaths = ['/not-found'];
+  
+  // 현재 경로가 헤더를 숨겨야 하는 경로인지 확인
+  const shouldHideHeader = hideHeaderPaths.includes(pathname);
+  
+  if (shouldHideHeader) {
+    return null;
+  }
+
   return (
     <header className="header">
       <div className="header_container inner">

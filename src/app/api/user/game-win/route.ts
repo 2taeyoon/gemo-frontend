@@ -8,24 +8,34 @@ import { checkSuperAdminAuth, createNotFoundRedirect } from '@/utils/adminAuth';
 /**
  * 게임 승리 처리 API
  * POST /api/user/game-win
- * ⚠️ 슈퍼 관리자 권한 필요
+ * 일반 사용자도 API 호출 가능
  * 사용자의 게임 승리를 처리하고 경험치를 지급합니다.
  */
 export async function POST(request: NextRequest) {
   try {
-    // 슈퍼 관리자 권한 검증
-    const authResult = await checkSuperAdminAuth();
+    // 세션 확인 (일반 사용자도 접근 가능)
+    const session = await getServerSession(authOptions);
     
-    if (!authResult.isAuthorized) {
-      return createNotFoundRedirect();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
-    const userId = authResult.userId!;
+    const userId = (session.user as any).id;
     
-    // 🔍 기존 game-win API 디버깅 (슈퍼 관리자)
-    console.log('🔍 기존 game-win API 디버깅 (슈퍼 관리자):');
+    if (!userId || !ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
+    
+    // 🔍 게임 승리 API 디버깅
+    console.log('🔍 게임 승리 API 호출:');
     console.log('  - userId:', userId);
-    console.log('  - userId type:', typeof userId);
+    console.log('  - email:', session.user.email);
     
     const client = await clientPromise;
     const db = client.db('gemo');

@@ -39,18 +39,28 @@ const authOptions = {
 /**
  * 출석체크 API
  * POST /api/user/attendance
- * ⚠️ 슈퍼 관리자 권한 필요
+ * 일반 사용자도 API 호출 가능
  */
 export async function POST(request: NextRequest) {
   try {
-    // 슈퍼 관리자 권한 검증
-    const authResult = await checkSuperAdminAuth();
+    // 세션 확인 (일반 사용자도 접근 가능)
+    const session = await getServerSession(authOptions);
     
-    if (!authResult.isAuthorized) {
-      return createNotFoundRedirect();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
-    const userId = authResult.userId!;
+    const userId = (session.user as any).id;
+    
+    if (!userId || !ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
 
     // MongoDB 직접 접근
     const client = await clientPromise;
@@ -166,18 +176,28 @@ export async function POST(request: NextRequest) {
 /**
  * 출석 정보 조회 API
  * GET /api/user/attendance
- * ⚠️ 슈퍼 관리자 권한 필요
+ * 일반 사용자도 API 호출 가능
  */
 export async function GET(request: NextRequest) {
   try {
-    // 슈퍼 관리자 권한 검증
-    const authResult = await checkSuperAdminAuth();
+    // 세션 확인 (일반 사용자도 접근 가능)
+    const session = await getServerSession(authOptions);
     
-    if (!authResult.isAuthorized) {
-      return createNotFoundRedirect();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
-    const userId = authResult.userId!;
+    const userId = (session.user as any).id;
+    
+    if (!userId || !ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
 
     // MongoDB 직접 접근
     const client = await clientPromise;

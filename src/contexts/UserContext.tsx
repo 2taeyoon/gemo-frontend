@@ -91,8 +91,35 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch('/api/user/profile')
-      const result = await response.json()
+      const response = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      // 응답 디버깅
+      console.log('Profile API 응답 상태:', response.status)
+      console.log('Profile API 응답 헤더:', response.headers.get('content-type'))
+      
+      const text = await response.text()
+      console.log('Profile API 응답 내용:', text)
+      
+      if (!text) {
+        console.error('Profile API 응답이 비어있습니다')
+        setUser(null)
+        return
+      }
+      
+      let result
+      try {
+        result = JSON.parse(text)
+      } catch (parseError) {
+        console.error('JSON 파싱 오류:', parseError)
+        console.error('파싱 시도한 텍스트:', text)
+        setUser(null)
+        return
+      }
 
       if (result.success && result.data) {
         const profile = result.data

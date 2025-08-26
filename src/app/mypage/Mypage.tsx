@@ -44,7 +44,12 @@ export default function Mypage() {
     if (!session?.user) return;
 
     try {
-      const response = await fetch('/api/user/attendance');
+      const response = await fetch('/api/user/attendance', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       const result = await response.json();
 
       if (result.success) {

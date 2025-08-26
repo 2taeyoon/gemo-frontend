@@ -12,6 +12,7 @@ export interface User {
   naverId?: string; // Naver OAuth ID (새로 추가)
   thema: 'light' | 'dark'; // 다크모드 설정
   active: boolean; // 활성 사용자 여부
+  superAdmin: boolean; // 슈퍼 관리자 권한 여부
   createdAt: string; // 계정 생성일
   updatedAt: string; // 마지막 업데이트일
   

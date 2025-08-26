@@ -7,6 +7,34 @@ import { calculateLevelFromTotalXp } from '@/utils/levelCalculation';
 import { calculateKodleDefeatXp } from '@/utils/xpCalculation';
 import { checkSuperAdminAuth, createNotFoundRedirect } from '@/utils/adminAuth';
 
+// NextAuth 설정 (메인 설정과 동일)
+const authOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+  ],
+  secret: process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-development",
+  session: {
+    strategy: "jwt" as const,
+  },
+  callbacks: {
+    async jwt({ token, user }: any) {
+      if (user) {
+        token.userId = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }: any) {
+      if (token?.userId && session.user) {
+        (session.user as any).id = token.userId as string;
+      }
+      return session;
+    },
+  },
+};
+
 /**
  * 코들 게임 패배 처리 API
  * POST /api/user/kodle-game-defeat
@@ -19,19 +47,29 @@ import { checkSuperAdminAuth, createNotFoundRedirect } from '@/utils/adminAuth';
  */
 export async function POST(request: NextRequest) {
   try {
-    // 슈퍼 관리자 권한 검증
-    const authResult = await checkSuperAdminAuth();
+    // 세션 확인 (일반 사용자도 접근 가능)
+    const session = await getServerSession(authOptions);
     
-    if (!authResult.isAuthorized) {
-      return createNotFoundRedirect();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      );
     }
 
-    const userId = authResult.userId!;
+    const userId = (session.user as any).id;
     
-    // 🔍 디버깅 로그 추가
-    console.log('🔍 kodle-game-defeat API 디버깅 (슈퍼 관리자):');
+    if (!userId || !ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { error: '유효하지 않은 사용자 ID입니다.' },
+        { status: 400 }
+      );
+    }
+    
+    // 🔍 코들 게임 패배 API 디버깅
+    console.log('🔍 코들 게임 패배 API 호출:');
     console.log('  - userId:', userId);
-    console.log('  - userId type:', typeof userId);
+    console.log('  - email:', session.user.email);
     
     const client = await clientPromise;
     const db = client.db('gemo');
