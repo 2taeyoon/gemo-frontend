@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useUser } from "@/contexts/UserContext"
 import { decomposeKorean, checkGuess } from "@/utils/korean"
-import "@/styles/kodle/kodle.css"
 
 // 한글 단어 데이터 타입 정의
 interface WordData {

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import "@/styles/layouts/header.css";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -55,47 +54,47 @@ export default function Header() {
   };
 
   // 경로별 헤더 설정 객체
-  const pageConfig = {
-    kodle: {
-      text: "Kodle",
-      link: "/kodle",
-      logo: {
-        light: "/favicons/kodle/favicon-192x192.png",
-        dark: "/favicons/kodle/favicon-192x192-white.png"
-      }
-    },
-    mypage: {
-      text: "Gemo",
-      link: "/",
-      logo: {
-        light: "/favicons/home/favicon-192x192.png",
-        dark: "/favicons/home/favicon-192x192-white.png"
-      }
-    },
-    default: {
-      text: "Gemo",
-      link: "/",
-      logo: {
-        light: "/favicons/home/favicon-192x192.png",
-        dark: "/favicons/home/favicon-192x192-white.png"
-      }
-    }
-  };
+  // const pageConfig = {
+  //   kodle: {
+  //     text: "Kodle",
+  //     link: "/kodle",
+  //     logo: {
+  //       light: "/favicons/kodle/favicon-192x192.png",
+  //       dark: "/favicons/kodle/favicon-192x192-white.png"
+  //     }
+  //   },
+  //   mypage: {
+  //     text: "Gemo",
+  //     link: "/",
+  //     logo: {
+  //       light: "/favicons/home/favicon-192x192.png",
+  //       dark: "/favicons/home/favicon-192x192-white.png"
+  //     }
+  //   },
+  //   default: {
+  //     text: "Gemo",
+  //     link: "/",
+  //     logo: {
+  //       light: "/favicons/home/favicon-192x192.png",
+  //       dark: "/favicons/home/favicon-192x192-white.png"
+  //     }
+  //   }
+  // };
 
   /**
    * 현재 페이지 설정 가져오기 (경로 패턴 매칭)
    */
-  const getCurrentConfig = () => {
-    if (pathname.startsWith("/kodle")) {
-      return pageConfig.kodle;
-    }
-    if (pathname.startsWith("/mypage")) {
-      return pageConfig.mypage;
-    }
-    return pageConfig.default;
-  };
+  // const getCurrentConfig = () => {
+  //   if (pathname.startsWith("/kodle")) {
+  //     return pageConfig.kodle;
+  //   }
+  //   if (pathname.startsWith("/mypage")) {
+  //     return pageConfig.mypage;
+  //   }
+  //   return pageConfig.default;
+  // };
 
-  const currentConfig = getCurrentConfig();
+  // const currentConfig = getCurrentConfig();
 
 	
   
@@ -113,7 +112,7 @@ export default function Header() {
     <header className="header">
       <div className="header_container inner">
         {/* 로고 및 제목 */}
-        <Link href={currentConfig.link} className="header_logo_wrapper">
+        {/* <Link href={currentConfig.link} className="header_logo_wrapper">
           <div className="header_logo">
             <Image src={darkMode ? currentConfig.logo.dark : currentConfig.logo.light}
               alt="gemo_logo" draggable={false} fill sizes="5rem"
@@ -121,7 +120,7 @@ export default function Header() {
             />
           </div>
           <h4>{currentConfig.text}</h4>
-        </Link>
+        </Link> */}
 
         {/* 네비게이션 메뉴 */}
         {status === "authenticated" && (

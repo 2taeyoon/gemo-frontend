@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Header from "./Header";
+import Header from "@/components/layouts/Header";
+import "@/styles/layouts/header.css"
 
 /**
  * 조건부 헤더 컴포넌트

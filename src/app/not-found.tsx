@@ -1,5 +1,4 @@
 import Link from "next/link";
-import "@/styles/not-found.css";
 
 /**
  * 404 Not Found 페이지

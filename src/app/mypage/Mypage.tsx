@@ -11,7 +11,6 @@ import LoadingSpinner from "@/components/mypage/LoadingSpinner";
 import LoginRequired from "@/components/mypage/LoginRequired";
 import ErrorMessage from "@/components/mypage/ErrorMessage";
 import HomeLink from "@/components/mypage/HomeLink";
-import "@/styles/mypage.css";
 
 /**
  * 마이페이지 클라이언트 컴포넌트

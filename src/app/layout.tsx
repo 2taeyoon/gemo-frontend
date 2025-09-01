@@ -1,10 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
 
-import "@/styles/global.css"
-import "@/styles/common.css"
-import "@/styles/darkmode.css"
-import "@/styles/fonts/pretendard.css"
+import "@/styles/style.css"
+import "@/styles/common/common.css"
 
 import { UserProvider } from "@/contexts/UserContext"
 import ConditionalHeader from "@/components/layouts/ConditionalHeader"
@@ -12,16 +10,16 @@ import SessionWrapper from "@/components/SessionWrapper"
 
 
 export const metadata: Metadata = {
-  title: "Gemo",
+  title: "GEMO",
   description: "Korean Word Game Platform",
   icons: {
     icon: [
-      { url: "/favicons/home/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicons/home/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicons/home/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicons/favicon-96x96.png", sizes: "96x96", type: "image/png" },
     ],
     apple: [
-      { url: "/favicons/home/favicon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicons/favicon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
   },
 }
