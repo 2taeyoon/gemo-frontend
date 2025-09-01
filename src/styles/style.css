@@ -1,0 +1,6 @@
+@charset "UTF-8";
+
+@import "./layouts/header.css";
+@import "./layouts/main.css";
+@import "./kodle/kodle.css";
+@import "./mypage/mypage.css";

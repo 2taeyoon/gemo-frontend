@@ -1,12 +1,20 @@
+@charset "UTF-8";
+
+@import "./pretendard.css";
+@import "./darkmode.css";
+@import "./global.css";
+@import "./not_found.css";
+
+
 /* 폰트 사이즈 설정 START! */
 h1 {	font-size: 3.2rem; font-weight: 900; color: var(--foreground); }
 h2 {	font-size: 2.8rem; font-weight: 800; color: var(--foreground); }
 h3 {	font-size: 2.4rem; font-weight: 700; color: var(--foreground); }
 h4 {	font-size: 2.0rem; font-weight: 600; color: var(--foreground); }
 h5 {	font-size: 1.8rem; font-weight: 500; color: var(--foreground); }
-h6 {	font-size: 1.6rem; font-weight: 400; color: var(--foreground); }
+/* h6 {	font-size: 1.6rem; font-weight: 400; color: var(--foreground); } */
 p {	font-size: 1.6rem; font-weight: 400; color: var(--foreground); }
-span {	font-size: 1.6rem; font-weight: 400; color: var(--foreground); }
+span {	font-size: 1.5rem; font-weight: 400; color: var(--foreground); }
 /* 폰트 사이즈 설정 END! */
 
 
