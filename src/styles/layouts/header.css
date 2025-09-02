@@ -1,5 +1,5 @@
 /* 헤더 영역 - 제목과 컨트롤 버튼들이 있는 상단 영역 */
-.header {	height: 7rem; background: transparent; position: absolute; width: 100%; }
+.header {	height: 7rem; background: transparent; position: absolute; width: 100%; z-index: 999;}
 .header_container { display: flex ; flex-direction: row; align-items: center; justify-content: flex-end; height: 100%; }
 .header_logo_wrapper { display: flex; align-items: center; justify-content: center; gap: 1.2rem; }
 .header_logo {	display: flex; align-items: center; justify-content: center; position: relative; width: 4rem; height: 4rem; }

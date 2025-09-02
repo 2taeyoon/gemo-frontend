@@ -5,17 +5,6 @@
   position: relative;
 }
 
-/* 작은 크기 레벨바 */
-.small {
-  width: 8rem;
-}
-
-/* 큰 크기 레벨바 */
-.large {
-  width: 100%;
-  max-width: 28rem;
-}
-
 /* 레벨 정보 영역 */
 .level_info {
   display: flex;
@@ -31,9 +20,7 @@
   font-size: 1.6rem;
 }
 
-.large .level {
-  font-size: 2.0rem;
-}
+
 
 /* XP 텍스트 */
 .xp_text {
@@ -41,9 +28,6 @@
   font-size: 0.875rem;
 }
 
-.large .xp_text {
-  font-size: 1.125rem;
-}
 
 /* 진행바 컨테이너 */
 .progress_bar {
@@ -54,10 +38,6 @@
 	overflow: hidden;
 	cursor: pointer;
 	transition: all 0.3s ease;
-}
-
-.large .progress_bar {
-  height: 4rem;
 }
 
 /* 진행바 채우기 */
@@ -111,7 +91,7 @@
   padding: 0.75rem;
   background-color: var(--card);
   color: var(--card-foreground);
-  font-size: 0.875rem;
+  font-size: 1.6rem;
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   white-space: nowrap;
@@ -138,15 +118,4 @@
   text-align: center;
   color: var(--muted-foreground);
   font-size: 0.875rem;
-}
-
-/* 다크모드에서의 툴팁 스타일 조정 */
-.dark .tooltip {
-  background-color: var(--popover);
-  color: var(--popover-foreground);
-  border-color: var(--border);
-}
-
-.dark .tooltip_arrow {
-  border-top-color: var(--popover);
 }
