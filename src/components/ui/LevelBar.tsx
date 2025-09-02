@@ -7,9 +7,11 @@ import "@/styles/auth/level_bar.css"
 
 // LevelBar 컴포넌트의 props 타입 정의
 interface LevelBarProps {
-  size?: "small" | "large" // 크기 옵션
   showXpText?: boolean // XP 텍스트 표시 여부
   animated?: boolean // 애니메이션 효과 여부
+	levleInfo?: boolean // 레벨 정보 표시 여부
+	progressBar?: boolean // 진행바 표시 여부
+	tooltip?: boolean // 툴팁 표시 여부
 }
 
 /**
@@ -101,7 +103,7 @@ function LevelUpModal({ level, onClose }: { level: number, onClose: () => void }
 
 
 // 사용자의 레벨과 경험치를 시각적으로 보여주는 컴포넌트
-export default function LevelBar({ size = "small", showXpText = false, animated = false }: LevelBarProps) {
+export default function LevelBar({ showXpText = false, animated = false, levleInfo = true, progressBar = true, tooltip = true }: LevelBarProps) {
   // 사용자 정보와 레벨업 정보를 가져옵니다
   const { user, levelUpInfo, clearLevelUp } = useUser()
 
@@ -123,14 +125,12 @@ export default function LevelBar({ size = "small", showXpText = false, animated 
   // 다음 레벨까지 남은 XP
   const remainingXp = requiredXpForNextLevel > 0 ? requiredXpForNextLevel - currentXp : 0
 
-  // 크기에 따른 스타일 클래스를 결정합니다
-  const sizeClass = size === "small" ? "small" : "large"
-
   return (
     <>
-      <div className={`level_bar_container ${sizeClass}`}>
+      <div className={`level_bar_container`}>
         {/* 레벨 표시 */}
-        <div className="level_info">
+        {levleInfo && (
+          <div className="level_info">
           <span className="level">Lv.{currentLevel}</span>
           {/* XP 텍스트를 표시하는 경우 */}
           {showXpText && (
@@ -138,10 +138,12 @@ export default function LevelBar({ size = "small", showXpText = false, animated 
               {currentXp} / {requiredXpForNextLevel} XP
             </span>
           )}
-        </div>
+          </div>
+        )}
 
         {/* 레벨 진행바 */}
-        <div
+        {progressBar && (
+          <div
           className={`progress_bar ${animated ? "animated" : ""}`}
           onMouseEnter={() => setShowTooltip(true)} // 마우스 올렸을 때 툴팁 표시
           onMouseLeave={() => setShowTooltip(false)} // 마우스 벗어났을 때 툴팁 숨김
@@ -149,24 +151,25 @@ export default function LevelBar({ size = "small", showXpText = false, animated 
           {/* 실제 진행률을 나타내는 바 */}
           <div className="progress_fill" style={{ width: `${Math.min(progress, 100)}%` }} />
 
-          {/* 작은 크기일 때 레벨 텍스트를 바 위에 표시 */}
-          {size === "small" && (
+          
+          
             <div className="level_overlay">
               <span className="level_text">Lv.{currentLevel}</span>
             </div>
-          )}
+          
 
-          {/* 툴팁 - 작은 크기일 때만 표시 */}
-          {showTooltip && size === "small" && (
+          {/* 툴팁 - 표시 */}
+          {tooltip && showTooltip && (
             <div className="tooltip">
               {currentXp} / {requiredXpForNextLevel} XP
               <div className="tooltip_arrow" />
             </div>
           )}
-        </div>
+          </div>
+        )}
 
-        {/* 큰 크기일 때 다음 레벨까지 남은 XP 표시 */}
-        {size === "large" && currentLevel < 500 && (
+        {/* 다음 레벨까지 남은 XP 표시 */}
+        {currentLevel < 500 && (
           <div className="remaining_xp">다음 레벨까지 {remainingXp} XP</div>
         )}
 
