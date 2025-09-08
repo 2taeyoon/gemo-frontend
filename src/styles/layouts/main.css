@@ -2,14 +2,16 @@
 
 /* 메인 페이지 배경 설정 */
 .main_section { width: 100%; height: 600px; min-height: 600px; position: relative;
-	background: url('../../../public/images/gemo_bg-light.png') no-repeat center center / cover; }
+	background-image: linear-gradient( to bottom, #FAF4C4 0%, #D9EED5 50%, #B7E4F7 100% ); }
 
 .login_button_wrap { background: var(--background); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 5px solid var(--boxborder); }
-.login_button_wrap.authenticated { display: flex ; align-items: center; justify-content: center; flex-direction: column; width: 300px; height: 200px; border-radius: 10px; }
+.login_button_wrap.authenticated { display: flex ; width: 300px; height: 200px; border-radius: 10px; }
+.login_button_wrap.authenticated .login_button_wrap_content { position: relative; width: 100%; }
+
 .login_button_wrap.not_authenticated { display: flex ; align-items: center; justify-content: center; width: 300px; height: 80px; border-radius: 999px; }
 
 .login_button_wrap .login_logo { display: flex ; position: absolute; top: -70px; width: 100px; height: 100px; background: url('../../../public/images/logo-light.png') no-repeat center center / cover; }
 
 /* 다크모드 시 */
-.dark .main_section { background: url('../../../public/images/gemo_bg-dark.png') no-repeat center center / cover; }
+.dark .main_section { background-image: linear-gradient( to bottom, #231931 0%, #1B334B 50%, #105669 100% ); }
 /* .dark .login_logo { background: url('../../../public/images/logo-dark.png') no-repeat center center / cover; } */

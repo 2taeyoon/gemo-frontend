@@ -151,12 +151,19 @@ export default function LevelBar({ showXpText = false, animated = false, levleIn
           {/* 실제 진행률을 나타내는 바 */}
           <div className="progress_fill" style={{ width: `${Math.min(progress, 100)}%` }} />
 
-          
-          
             <div className="level_overlay">
               <span className="level_text">Lv.{currentLevel}</span>
+
+						  {/* 다음 레벨까지 남은 XP 표시 */}
+							{currentLevel < 500 && (
+								<span className="remaining_xp">다음 레벨까지 {remainingXp} XP</span>
+							)}
+
+							{/* 최대 레벨 도달 시 */}
+							{currentLevel >= 500 && (
+								<span className="remaining_xp">만렙입니다!</span>
+							)}
             </div>
-          
 
           {/* 툴팁 - 표시 */}
           {tooltip && showTooltip && (
@@ -168,15 +175,7 @@ export default function LevelBar({ showXpText = false, animated = false, levleIn
           </div>
         )}
 
-        {/* 다음 레벨까지 남은 XP 표시 */}
-        {currentLevel < 500 && (
-          <div className="remaining_xp">다음 레벨까지 {remainingXp} XP</div>
-        )}
 
-        {/* 최대 레벨 도달 시 */}
-        {currentLevel >= 500 && (
-          <div className="remaining_xp">🎉 최대 레벨 도달!</div>
-        )}
       </div>
 
       {/* 레벨업 모달 표시 */}

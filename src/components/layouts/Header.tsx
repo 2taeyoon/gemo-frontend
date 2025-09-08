@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useUser } from "@/contexts/UserContext";
-import LevelBar from "@/components/ui/LevelBar";
+
 
 /**
  * 헤더 컴포넌트
@@ -20,11 +19,14 @@ export default function Header() {
   // 사용자 정보 (MongoDB에서 가져온 데이터)
   const { user, loading, updateThema } = useUser();
 
-  // 다크모드 상태는 user.thema 값을 기반으로 계산
-  const darkMode = user?.thema === 'dark';
+  // 다크모드 상태 관리 (로그인/로그아웃 상태 모두 고려)
+  const [localDarkMode, setLocalDarkMode] = useState(false);
+  
+  // 로그인 상태에서는 user.thema를, 로그아웃 상태에서는 로컬 상태를 사용
+  const darkMode = user ? user.thema === 'dark' : localDarkMode;
 
   /**
-   * user.thema가 변경될 때마다 body 클래스를 업데이트합니다
+   * 다크모드 상태가 변경될 때마다 body 클래스를 업데이트합니다
    */
   useEffect(() => {
     if (darkMode) {
@@ -36,11 +38,17 @@ export default function Header() {
 
   /**
    * 다크모드 토글 함수
+   * 로그인 상태: DB에 저장
+   * 로그아웃 상태: 로컬 상태만 변경
    */
   const toggleDarkMode = () => {
     if (user) {
+      // 로그인 상태: DB에 저장
       const newThema = user.thema === 'light' ? 'dark' : 'light';
       updateThema(newThema);
+    } else {
+      // 로그아웃 상태: 로컬 상태만 변경
+      setLocalDarkMode(prev => !prev);
     }
   };
 
@@ -48,56 +56,10 @@ export default function Header() {
    * 로그아웃 처리 함수
    */
   const handleLogout = async () => {
-    if (confirm('로그아웃 하시겠습니까?')) {
-      await signOut({ callbackUrl: '/' });
-    }
+    await signOut({ callbackUrl: '/' });
   };
 
-  // 경로별 헤더 설정 객체
-  // const pageConfig = {
-  //   kodle: {
-  //     text: "Kodle",
-  //     link: "/kodle",
-  //     logo: {
-  //       light: "/favicons/kodle/favicon-192x192.png",
-  //       dark: "/favicons/kodle/favicon-192x192-white.png"
-  //     }
-  //   },
-  //   mypage: {
-  //     text: "Gemo",
-  //     link: "/",
-  //     logo: {
-  //       light: "/favicons/home/favicon-192x192.png",
-  //       dark: "/favicons/home/favicon-192x192-white.png"
-  //     }
-  //   },
-  //   default: {
-  //     text: "Gemo",
-  //     link: "/",
-  //     logo: {
-  //       light: "/favicons/home/favicon-192x192.png",
-  //       dark: "/favicons/home/favicon-192x192-white.png"
-  //     }
-  //   }
-  // };
 
-  /**
-   * 현재 페이지 설정 가져오기 (경로 패턴 매칭)
-   */
-  // const getCurrentConfig = () => {
-  //   if (pathname.startsWith("/kodle")) {
-  //     return pageConfig.kodle;
-  //   }
-  //   if (pathname.startsWith("/mypage")) {
-  //     return pageConfig.mypage;
-  //   }
-  //   return pageConfig.default;
-  // };
-
-  // const currentConfig = getCurrentConfig();
-
-	
-  
   // 헤더를 숨길 경로들
   const hideHeaderPaths = ['/not-found'];
   
@@ -111,16 +73,6 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header_container inner">
-        {/* 로고 및 제목 */}
-        {/* <Link href={currentConfig.link} className="header_logo_wrapper">
-          <div className="header_logo">
-            <Image src={darkMode ? currentConfig.logo.dark : currentConfig.logo.light}
-              alt="gemo_logo" draggable={false} fill sizes="5rem"
-              style={{ objectFit: 'cover' }}
-            />
-          </div>
-          <h4>{currentConfig.text}</h4>
-        </Link> */}
 
         {/* 네비게이션 메뉴 */}
         {status === "authenticated" && (
@@ -149,44 +101,18 @@ export default function Header() {
             <span style={{ color: '#666' }}>로딩 중...</span>
           )}
           
-          {/* 로그인된 사용자 정보 및 레벨바 */}
-          {status === "authenticated" && session?.user && (
+          {/* 로그인된 사용자 정보 (메인 페이지가 아닐 때만 표시) */}
+          {status === "authenticated" && session?.user && pathname !== '/' && (
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
               gap: '15px',
               marginRight: '15px'
             }}>
-              {/* 레벨바 표시 */}
-              {user && !loading && (
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px' 
-                }}>
-                  <LevelBar size="small" showXpText={true} />
-                </div>
-              )}
-              
-              {/* 레벨바 로딩 중 */}
-              {loading && (
-                <span style={{ 
-                  color: '#666',
-                  fontSize: '12px'
-                }}>
-                  레벨 로딩 중...
-                </span>
-              )}
-              
+
               {/* 사용자 이메일 표시 */}
-              <span style={{ 
-                color: '#333',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}>
-                {session.user.email || session.user.name}님
-              </span>
-              
+              <span>{session.user.email || session.user.name}님 환영합니다!</span>
+
               {/* 로그아웃 버튼 */}
               <button
                 onClick={handleLogout}
@@ -207,8 +133,8 @@ export default function Header() {
             </div>
           )}
 
-          {/* 로그인되지 않은 경우 로그인 버튼 표시 */}
-          {status === "unauthenticated" && (
+          {/* 로그인되지 않은 경우 로그인 버튼 표시 (메인 페이지가 아닐 때만 표시) */}
+          {status === "unauthenticated" && pathname !== '/' && (
             <Link 
               href="/auth" 
               style={{
