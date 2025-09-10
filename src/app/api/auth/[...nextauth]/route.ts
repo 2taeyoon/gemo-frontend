@@ -111,7 +111,15 @@ const handler = NextAuth({
               // 기타 게임 데이터
               totalScore: 0, // 총 점수
               kodleTotalPlayed: 0, // 코들 게임 총 플레이 횟수
-              achievements: [], // 업적 목록
+              achievements: {
+                attendance: {
+                  d1: { completed: false, text: "첫 출석 완료! 연속 1일 달성" },
+                  d7: { completed: false, text: "연속 7일 출석 달성" },
+                  d14: { completed: false, text: "연속 14일 출석 달성" },
+                  d21: { completed: false, text: "연속 21일 출석 달성" },
+                  d28: { completed: false, text: "연속 28일 출석 달성" }
+                }
+              }, // 업적 목록
               lastPlayed: null, // 마지막 플레이 날짜
             },
             // 사용자 설정
