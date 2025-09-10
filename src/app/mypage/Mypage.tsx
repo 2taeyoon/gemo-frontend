@@ -7,10 +7,13 @@ import UserInfo from "@/components/mypage/UserInfo";
 import AttendanceSection from "@/components/mypage/AttendanceSection";
 import GameStats from "@/components/mypage/GameStats";
 import RewardsSection from "@/components/mypage/RewardsSection";
+import AchievementsSection from "@/components/mypage/AchievementsSection";
+import AchievementPopup from "@/components/mypage/AchievementPopup";
 import LoadingSpinner from "@/components/mypage/LoadingSpinner";
 import LoginRequired from "@/components/mypage/LoginRequired";
 import ErrorMessage from "@/components/mypage/ErrorMessage";
 import HomeLink from "@/components/mypage/HomeLink";
+import { AttendanceAchievementKey } from "@/types/user";
 
 /**
  * 마이페이지 클라이언트 컴포넌트
@@ -21,7 +24,7 @@ export default function Mypage() {
   const { data: session, status } = useSession();
   
   // 사용자 정보와 출석체크 함수
-  const { user, loading, checkAttendance } = useUser();
+  const { user, loading, refreshUser } = useUser();
   
   // 출석체크 상태 관리
   const [attendanceStatus, setAttendanceStatus] = useState<{
@@ -35,6 +38,11 @@ export default function Mypage() {
   
   // 상태 로딩 중
   const [statusLoading, setStatusLoading] = useState(true);
+  
+  // 업적 팝업 상태
+  const [unlockedAchievements, setUnlockedAchievements] = useState<
+    { key: AttendanceAchievementKey; text: string }[]
+  >([]);
 
   /**
    * 출석체크 상태를 API에서 조회하는 함수
@@ -72,16 +80,44 @@ export default function Mypage() {
     setIsProcessing(true);
     
     try {
-      // UserContext의 출석체크 함수 호출
-      await checkAttendance();
+      // 직접 API 호출하여 업적 정보 받기
+      const response = await fetch('/api/user/attendance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
-      // 출석체크 상태 다시 조회
-      await fetchAttendanceStatus();
+      const result = await response.json();
+      
+      if (result.success) {
+        // 업적이 해제되었다면 팝업 표시
+        if (result.data.unlockedAchievements && result.data.unlockedAchievements.length > 0) {
+          setUnlockedAchievements(result.data.unlockedAchievements);
+        }
+        
+        // UserContext의 사용자 정보 새로고침 (중복 API 호출 방지)
+        await refreshUser();
+        
+        // 출석체크 상태 다시 조회
+        await fetchAttendanceStatus();
+      } else {
+        console.error('출석체크 실패:', result.error);
+        alert(result.error);
+      }
     } catch (error) {
       console.error('출석체크 처리 중 오류:', error);
+      alert('출석체크 중 오류가 발생했습니다.');
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  /**
+   * 업적 팝업 닫기 핸들러
+   */
+  const handleCloseAchievementPopup = () => {
+    setUnlockedAchievements([]);
   };
 
   /**
@@ -177,6 +213,9 @@ export default function Mypage() {
         {/* 게임 통계 */}
         <GameStats user={user} attendanceStatus={attendanceStatus} />
 
+        {/* 출석 업적 */}
+        <AchievementsSection achievements={user.gameData?.achievements} />
+
         {/* 출석 보상 안내 */}
         <RewardsSection
           attendanceStatus={attendanceStatus}
@@ -186,6 +225,14 @@ export default function Mypage() {
         {/* 홈으로 돌아가기 */}
         <HomeLink />
       </div>
+
+      {/* 업적 달성 팝업 */}
+      {unlockedAchievements.length > 0 && (
+        <AchievementPopup 
+          achievements={unlockedAchievements}
+          onClose={handleCloseAchievementPopup}
+        />
+      )}
     </div>
   );
 }
