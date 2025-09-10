@@ -440,6 +440,131 @@
   }
 }
 
+/* 업적 섹션 */
+.achievements-section {
+  margin-bottom: 30px;
+}
+
+.achievements-section h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(64px, 1fr));
+  gap: 16px;
+  align-items: center;
+  justify-items: center;
+  margin-bottom: 20px;
+}
+
+.achievement-icon {
+  position: relative;
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--muted); /* 미완료: 회색 톤 */
+  text-align: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  cursor: default;
+  width: 100%;
+  max-width: 80px;
+}
+
+.achievement-icon img {
+  display: block;
+}
+
+.achievement-icon .label {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.achievement-icon.completed {
+  background: var(--card); /* 완료: 밝게 */
+  border-color: #c7e5c9;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+/* 완료된 업적의 이미지 투명도는 인라인 스타일에서 처리 */
+
+.achievement-icon.completed .label {
+  color: #10b981; /* 포인트 */
+}
+
+/* hover: 기본 툴팁은 title 사용. 필요 시 커스텀 툴팁 클래스를 추가 구현 */
+.achievement-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+/* 업적 달성 팝업 */
+.achievement-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.achievement-popup-content {
+  background: var(--card);
+  color: var(--card-foreground);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  animation: fadeInScale 0.5s ease-out;
+  border: 1px solid var(--border);
+}
+
+.achievement-popup-content .achievement-emoji {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.achievement-popup-content h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.achievement-popup-content p {
+  font-size: 1.5rem;
+  color: var(--muted-foreground);
+  margin-bottom: 30px;
+}
+
+.achievement-popup-button {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.achievement-popup-button:hover {
+  background: var(--primary);
+  opacity: 0.9;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .mypage-container {
@@ -461,5 +586,19 @@
   
   .reward-item {
     padding: 12px 16px;
+  }
+
+  .achievement-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .achievement-icon {
+    max-width: none;
+  }
+
+  .achievement-popup-content {
+    padding: 30px 20px;
+    margin: 20px;
   }
 } 

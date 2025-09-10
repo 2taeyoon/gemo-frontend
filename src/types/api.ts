@@ -1,6 +1,7 @@
 /**
  * API 관련 타입 정의
  */
+import { AttendanceAchievementKey } from './user';
 
 // 기본 API 응답 타입
 export interface ApiResponse<T = any> {
@@ -60,7 +61,20 @@ export interface GameWinResponse {
   levelUp?: boolean;
 }
 
-// 출석체크 API 응답
+// 출석체크 API 응답 데이터
+export interface AttendanceResponseData {
+  consecutiveAttendance: number;
+  leveledUp: boolean;
+  level: number;
+  currentXp: number;
+  totalXp: number;
+  xpGained: number;
+  baseXp: number;
+  bonusXp: number;
+  unlockedAchievements: { key: AttendanceAchievementKey; text: string }[];
+}
+
+// 출석체크 API 응답 (기존 호환성 유지)
 export interface AttendanceResponse {
   hasCheckedToday: boolean;
   lastAttendance: string | null;

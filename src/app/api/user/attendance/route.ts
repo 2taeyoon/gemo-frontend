@@ -129,25 +129,64 @@ export async function POST(request: NextRequest) {
     // 레벨업 체크
     const leveledUp = level > (user.gameData?.level || 1);
 
+    // 업적 처리 로직
+    const unlockedAchievements: { key: string; text: string }[] = [];
+    const updateFields: any = {
+      'gameData.lastAttendance': today,
+      'gameData.consecutiveAttendance': newConsecutiveAttendance,
+      'gameData.totalXp': newTotalUserXp,
+      'gameData.currentXp': currentXp,
+      'gameData.level': level,
+      updatedAt: new Date(),
+    };
+
+    // 기존 사용자의 achievements 구조 확인 및 기본값 설정
+    const defaultAchievements = {
+      attendance: {
+        d1: { completed: false, text: "첫 출석 완료! 연속 1일 달성" },
+        d7: { completed: false, text: "연속 7일 출석 달성" },
+        d14: { completed: false, text: "연속 14일 출석 달성" },
+        d21: { completed: false, text: "연속 21일 출석 달성" },
+        d28: { completed: false, text: "연속 28일 출석 달성" }
+      }
+    };
+
+    // 기존 achievements가 없으면 기본값 설정
+    if (!user.gameData?.achievements?.attendance) {
+      updateFields['gameData.achievements'] = defaultAchievements;
+    }
+
+    // 연속 출석 일수에 따른 업적 해제 확인
+    const achievementKeys = ['d1', 'd7', 'd14', 'd21', 'd28'];
+    const achievementDays = [1, 7, 14, 21, 28];
+    
+    achievementKeys.forEach((key, index) => {
+      const requiredDays = achievementDays[index];
+      if (newConsecutiveAttendance >= requiredDays) {
+        const currentAchievement = user.gameData?.achievements?.attendance?.[key as keyof typeof user.gameData.achievements.attendance];
+        // 아직 완료되지 않은 업적만 해제
+        if (!currentAchievement?.completed) {
+          const achievementText = defaultAchievements.attendance[key as keyof typeof defaultAchievements.attendance].text;
+          updateFields[`gameData.achievements.attendance.${key}.completed`] = true;
+          unlockedAchievements.push({ key, text: achievementText });
+        }
+      }
+    });
+
     // 출석체크 및 경험치 업데이트 (gameData 구조)
     await usersCollection.updateOne(
       { _id: new ObjectId(userId) },
-      {
-        $set: {
-          'gameData.lastAttendance': today,
-          'gameData.consecutiveAttendance': newConsecutiveAttendance,
-          'gameData.totalXp': newTotalUserXp,
-          'gameData.currentXp': currentXp,
-          'gameData.level': level,
-          updatedAt: new Date(),
-        }
-      }
+      { $set: updateFields }
     );
 
     console.log(`📅 출석체크 완료: ${user.email}, 연속 ${newConsecutiveAttendance}일, ${totalXp}XP 획득`);
 
     if (leveledUp) {
       console.log(`🎉 레벨업! ${user.gameData?.level || 1} → ${level}`);
+    }
+
+    if (unlockedAchievements.length > 0) {
+      console.log(`🏆 업적 해제:`, unlockedAchievements.map(a => `${a.key}: ${a.text}`).join(', '));
     }
 
     return NextResponse.json({
@@ -160,7 +199,8 @@ export async function POST(request: NextRequest) {
         level,
         currentXp,
         totalXp: newTotalUserXp,
-        leveledUp
+        leveledUp,
+        unlockedAchievements
       }
     });
 

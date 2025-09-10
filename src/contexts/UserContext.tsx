@@ -28,6 +28,8 @@ interface User {
   // 하위 호환성을 위한 필드들 (기존 코드에서 사용 중)
   gameWins: number // kodleGameWins와 동일한 값
   consecutiveWins: number // kodleSuccessiveVictory와 동일한 값
+  // gameData 전체 정보 (업적 등 추가 데이터 포함)
+  gameData?: any
 }
 
 /**
@@ -142,6 +144,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           // 하위 호환성을 위한 필드들 (기존 코드에서 사용하는 곳들을 위해 유지)
           gameWins: profile.gameData?.kodleGameWins || profile.gameData?.gameWins || 0,
           consecutiveWins: profile.gameData?.kodleSuccessiveVictory || profile.gameData?.consecutiveWins || 0,
+          // gameData 전체 정보 포함 (업적 등 추가 데이터)
+          gameData: profile.gameData,
         })
       } else {
         console.error('사용자 프로필 조회 실패:', result.error)
