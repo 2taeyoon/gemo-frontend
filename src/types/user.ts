@@ -60,6 +60,37 @@ export interface AttendanceStatus {
   consecutiveAttendance: number;
 }
 
+// 출석 업적 키 타입
+export type AttendanceAchievementKey = 'd1' | 'd7' | 'd14' | 'd21' | 'd28';
+
+// 출석 업적 아이템 타입
+export interface AttendanceAchievementItem {
+  completed: boolean;
+  text: string;
+}
+
+// 게임 데이터 업적 타입
+export interface GameDataAchievements {
+  attendance: Record<AttendanceAchievementKey, AttendanceAchievementItem>;
+}
+
+// 게임 데이터 타입 (기존 사용자 타입에서 분리)
+export interface GameData {
+  level: number;
+  currentXp: number;
+  totalXp: number;
+  lastAttendance: string | null;
+  consecutiveAttendance: number;
+  kodleGameWins: number;
+  kodleGameDefeat: number;
+  kodleSuccessiveVictory: number;
+  kodleMaximumSuccessiveVictory: number;
+  totalScore: number;
+  kodleTotalPlayed: number;
+  achievements: GameDataAchievements;
+  lastPlayed: string | null;
+}
+
 // 레벨 정보 타입
 export interface LevelInfo {
   level: number;
